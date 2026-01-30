@@ -38,7 +38,7 @@ pub(crate) fn group_for_stage(
 fn group_by_mark(items: Vec<Mark>, config: &MarkSortConfig) -> Vec<Group> {
     let mut map: HashMap<&'static str, Vec<Mark>> = HashMap::new();
     for mark in items {
-        let Some(kind) = normalize_mark(&mark.mark) else {
+        let Some(kind) = normalize_mark(mark.mark) else {
             continue;
         };
         map.entry(kind).or_default().push(mark);

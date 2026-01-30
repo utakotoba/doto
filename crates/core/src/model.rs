@@ -7,7 +7,7 @@ pub struct Mark {
     pub path: Arc<PathBuf>,
     pub line: u32,
     pub column: u32,
-    pub mark: String,
+    pub mark: &'static str,
     pub language: &'static str,
 }
 

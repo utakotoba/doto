@@ -143,7 +143,7 @@ fn render_mark(
     depth: usize,
 ) -> io::Result<()> {
     let relative = relativize_path(mark.path.as_ref(), roots);
-    let styled_mark = mark_styled(mark.mark.as_str());
+    let styled_mark = mark_styled(mark.mark);
     writeln!(
         out,
         "{}{} {}",

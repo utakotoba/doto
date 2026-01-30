@@ -342,6 +342,7 @@ name = "doto-core"
 version = "0.1.0"
 dependencies = [
  "ignore",
+ "memchr",
  "regex",
  "serde",
  "tempfile",

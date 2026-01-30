@@ -7,7 +7,7 @@ use regex::bytes::Regex;
 
 use crate::comments::{BlockState, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
-use crate::constants::normalize_mark;
+use crate::constants::normalize_mark_bytes;
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::model::Mark;
 use crate::scanner::report::is_cancelled;
@@ -52,17 +52,14 @@ pub fn scan_file(
         find_comment_ranges(&buf, &mut block_state, syntax.spec, |start, end| {
             for found in regex.find_iter(&buf[start..end]) {
                 let raw = &buf[start + found.start()..start + found.end()];
-                let Ok(raw_str) = std::str::from_utf8(raw) else {
-                    continue;
-                };
-                let Some(mark) = normalize_mark(raw_str) else {
+                let Some(mark) = normalize_mark_bytes(raw) else {
                     continue;
                 };
                 let entry = Mark {
                     path: Arc::clone(&path),
                     line: line_no,
                     column: (start + found.start() + 1) as u32,
-                    mark: mark.to_string(),
+                    mark,
                     language: syntax.language,
                 };
                 if let Some(progress) = progress.as_deref() {

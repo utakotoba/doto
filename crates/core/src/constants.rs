@@ -76,3 +76,23 @@ pub fn normalize_mark(input: &str) -> Option<&'static str> {
     }
     None
 }
+
+pub fn normalize_mark_bytes(input: &[u8]) -> Option<&'static str> {
+    for entry in DEFAULT_MARK_PRIORITIES {
+        let bytes = entry.mark.as_bytes();
+        if bytes.len() != input.len() {
+            continue;
+        }
+        let mut matches = true;
+        for (left, right) in bytes.iter().zip(input) {
+            if left.to_ascii_uppercase() != right.to_ascii_uppercase() {
+                matches = false;
+                break;
+            }
+        }
+        if matches {
+            return Some(entry.mark);
+        }
+    }
+    None
+}

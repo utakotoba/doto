@@ -80,7 +80,7 @@ struct Bucket {
 
 fn group_by_stage(stage: &SortStage, marks: &[Mark], roots: &[PathBuf]) -> Vec<Bucket> {
     match stage {
-        SortStage::Mark(_) => group_by_key(marks, |mark| GroupKey::Mark(mark.mark.clone())),
+        SortStage::Mark(_) => group_by_key(marks, |mark| GroupKey::Mark(mark.mark.to_string())),
         SortStage::Language(_) => {
             group_by_key(marks, |mark| GroupKey::Language(mark.language.to_string()))
         }

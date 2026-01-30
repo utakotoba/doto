@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use memchr::{memchr, memchr2, memchr3};
+
 #[derive(Clone, Copy, Debug)]
 pub struct StringDelim {
     pub token: &'static [u8],
@@ -338,24 +340,36 @@ fn find_ranges(
     let len = line.len();
     let mut cursor = 0;
     let mut interesting = [false; 256];
+    let mut interesting_bytes = [0u8; 8];
+    let mut interesting_len = 0usize;
+
+    let mut push_interesting = |byte: u8| {
+        if !interesting[byte as usize] {
+            interesting[byte as usize] = true;
+            if interesting_len < interesting_bytes.len() {
+                interesting_bytes[interesting_len] = byte;
+                interesting_len += 1;
+            }
+        }
+    };
 
     for delim in spec.strings {
         if let Some(&first) = delim.token.first() {
-            interesting[first as usize] = true;
+            push_interesting(first);
         }
     }
     if let Some(token) = spec.line_comment {
         if let Some(&first) = token.first() {
-            interesting[first as usize] = true;
+            push_interesting(first);
         }
     }
     if let Some((start, _)) = spec.block_comment {
         if let Some(&first) = start.first() {
-            interesting[first as usize] = true;
+            push_interesting(first);
         }
     }
     if spec.raw_string {
-        interesting[b'r' as usize] = true;
+        push_interesting(b'r');
     }
 
     if state.in_block {
@@ -409,7 +423,19 @@ fn find_ranges(
             return;
         }
 
-        if !interesting[line[idx] as usize] {
+        if interesting_len <= 3 {
+            if !interesting[line[idx] as usize] {
+                if let Some(next) = find_next_interesting(
+                    line,
+                    idx + 1,
+                    &interesting_bytes[..interesting_len],
+                ) {
+                    idx = next;
+                } else {
+                    break;
+                }
+            }
+        } else if !interesting[line[idx] as usize] {
             idx += 1;
             continue;
         }
@@ -459,6 +485,19 @@ fn find_ranges(
             state.escape = false;
         }
     }
+}
+
+fn find_next_interesting(line: &[u8], start: usize, interesting: &[u8]) -> Option<usize> {
+    if start >= line.len() || interesting.is_empty() {
+        return None;
+    }
+    let hay = &line[start..];
+    let offset = match interesting.len() {
+        1 => memchr(interesting[0], hay),
+        2 => memchr2(interesting[0], interesting[1], hay),
+        _ => memchr3(interesting[0], interesting[1], interesting[2], hay),
+    }?;
+    Some(start + offset)
 }
 
 fn find_string_start(line: &[u8], strings: &[StringDelim], idx: usize) -> Option<usize> {
@@ -514,18 +553,18 @@ fn find_raw_string_end(line: &[u8], start: usize, hashes: usize) -> Option<usize
     }
     let mut idx = start;
     while idx < line.len() {
-        if line[idx] == b'"' {
-            let mut ok = true;
-            for offset in 0..hashes {
-                let pos = idx + 1 + offset;
-                if pos >= line.len() || line[pos] != b'#' {
-                    ok = false;
-                    break;
-                }
+        let offset = memchr(b'"', &line[idx..])?;
+        idx += offset;
+        let mut ok = true;
+        for offset in 0..hashes {
+            let pos = idx + 1 + offset;
+            if pos >= line.len() || line[pos] != b'#' {
+                ok = false;
+                break;
             }
-            if ok {
-                return Some(idx + 1 + hashes);
-            }
+        }
+        if ok {
+            return Some(idx + 1 + hashes);
         }
         idx += 1;
     }
