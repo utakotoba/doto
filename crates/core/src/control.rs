@@ -10,6 +10,7 @@ pub enum SkipReason {
     MaxFileSize,
     Metadata,
     Io,
+    UnsupportedSyntax,
 }
 
 pub trait ProgressReporter: Send + Sync {
