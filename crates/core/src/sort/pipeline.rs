@@ -13,7 +13,12 @@ pub fn apply_sort_pipeline(marks: Vec<Mark>, config: &SortConfig, roots: &[PathB
     output
 }
 
-fn sort_recursive(stages: &[SortStage], roots: &[PathBuf], items: Vec<Mark>, output: &mut Vec<Mark>) {
+fn sort_recursive(
+    stages: &[SortStage],
+    roots: &[PathBuf],
+    items: Vec<Mark>,
+    output: &mut Vec<Mark>,
+) {
     if stages.is_empty() {
         output.extend(items);
         return;

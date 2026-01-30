@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use ignore::WalkBuilder;
 use ignore::overrides::OverrideBuilder;
 
-use crate::constants::apply_builtin_excludes;
 use crate::config::ScanConfig;
+use crate::constants::apply_builtin_excludes;
 use crate::error::ScanError;
 
 pub fn build_walk_builder(config: &ScanConfig, root: &Path) -> Result<WalkBuilder, ScanError> {

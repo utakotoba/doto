@@ -106,23 +106,23 @@ impl Scanner {
                     let path = entry.path();
                     if let Some(max_file_size) = config.max_file_size() {
                         match entry.metadata() {
-                        Ok(metadata) if metadata.len() > max_file_size => {
-                            report_file_skipped(&progress, path, SkipReason::MaxFileSize);
-                            counters.files_skipped.fetch_add(1, Ordering::Relaxed);
-                            return WalkState::Continue;
-                        }
-                        Err(err) => {
-                            record_warning(
-                                &progress,
-                                &mut local.warnings,
-                                Some(path.to_path_buf()),
-                                err.to_string(),
-                            );
-                            report_file_skipped(&progress, path, SkipReason::Metadata);
-                            counters.files_skipped.fetch_add(1, Ordering::Relaxed);
-                            return WalkState::Continue;
-                        }
-                        _ => {}
+                            Ok(metadata) if metadata.len() > max_file_size => {
+                                report_file_skipped(&progress, path, SkipReason::MaxFileSize);
+                                counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                                return WalkState::Continue;
+                            }
+                            Err(err) => {
+                                record_warning(
+                                    &progress,
+                                    &mut local.warnings,
+                                    Some(path.to_path_buf()),
+                                    err.to_string(),
+                                );
+                                report_file_skipped(&progress, path, SkipReason::Metadata);
+                                counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                                return WalkState::Continue;
+                            }
+                            _ => {}
                         }
                     }
 
@@ -140,9 +140,7 @@ impl Scanner {
                             report_file_scanned(&progress, path);
                             let added = local.marks.len().saturating_sub(before);
                             if added > 0 {
-                                counters
-                                    .matches
-                                    .fetch_add(added as u64, Ordering::Relaxed);
+                                counters.matches.fetch_add(added as u64, Ordering::Relaxed);
                             }
                         }
                         Ok(ScanOutcome::Skipped(reason)) => {
@@ -152,9 +150,7 @@ impl Scanner {
                         Ok(ScanOutcome::Cancelled) => {
                             let added = local.marks.len().saturating_sub(before);
                             if added > 0 {
-                                counters
-                                    .matches
-                                    .fetch_add(added as u64, Ordering::Relaxed);
+                                counters.matches.fetch_add(added as u64, Ordering::Relaxed);
                             }
                             mark_cancelled(&counters.cancelled, &progress);
                             return WalkState::Quit;
@@ -174,7 +170,6 @@ impl Scanner {
                     WalkState::Continue
                 })
             });
-
         }
 
         let output = Arc::try_unwrap(output)

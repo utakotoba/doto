@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use crate::constants::DEFAULT_MARK_REGEX;
 use crate::control::{CancellationToken, ProgressConfig, ProgressReporter};
 use crate::sort::{SortConfig, SortStage};
-use crate::constants::DEFAULT_MARK_REGEX;
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]

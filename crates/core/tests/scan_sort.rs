@@ -34,7 +34,12 @@ fn scan_applies_sort_pipeline() -> Result<(), Box<dyn Error>> {
     let ordered = result
         .marks
         .iter()
-        .map(|mark| (mark.mark.as_str(), mark.path.file_name().unwrap().to_string_lossy()))
+        .map(|mark| {
+            (
+                mark.mark.as_str(),
+                mark.path.file_name().unwrap().to_string_lossy(),
+            )
+        })
         .collect::<Vec<_>>();
 
     assert_eq!(ordered.len(), 4);
