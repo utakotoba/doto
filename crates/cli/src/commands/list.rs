@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::io::{self, Write};
 
-use doto_core::{ScanConfig, scan};
 use colored::Colorize;
+use doto_core::{ScanConfig, scan};
 
 use crate::commands::renderer::render_list;
 use crate::config::Config;
@@ -48,9 +48,26 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         builder = builder.sort_config(sort_config.clone());
     }
 
-    progress.clone().start_if_slow(std::time::Duration::from_millis(1500));
+    progress
+        .clone()
+        .start_if_slow(std::time::Duration::from_millis(1500));
     let result = scan(builder.build())?;
     progress.finish();
+    if result.marks.len() > 76 {
+        let mut stderr = io::BufWriter::new(io::stderr());
+        writeln!(
+            stderr,
+            "{}",
+            format!(
+                "too many results ({}) to display well in the terminal; please narrow the scan directory or filters",
+                result.marks.len()
+            )
+            .red()
+        )?;
+        stderr.flush()?;
+        return Ok(());
+    }
+
     render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
 
     if result.marks.is_empty() {
