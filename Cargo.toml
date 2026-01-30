@@ -1,7 +1,7 @@
 # MARK: - workspace metadata
 [workspace]
 resolver = "3"
-members = ["core", "cli"]
+members = ["crates/*"]
 
 # MARK: - workspace shared
 [workspace.package]
