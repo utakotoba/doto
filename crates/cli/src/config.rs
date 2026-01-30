@@ -1,13 +1,15 @@
 use std::path::PathBuf;
 
-use config::{Config, ConfigError, Environment, File};
+use std::error::Error;
+
+use config::{Config as ConfigSource, ConfigError, Environment, File};
 use serde::Deserialize;
 
 use crate::cli::{ConfigFormat, ListArgs};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
-pub struct Settings {
+pub struct Config {
     pub roots: Vec<PathBuf>,
     pub regex: Option<String>,
     pub include: Vec<String>,
@@ -19,11 +21,11 @@ pub struct Settings {
     pub read_buffer_size: Option<usize>,
 }
 
-pub fn load_settings(
+pub fn load_config(
     config_path: Option<&PathBuf>,
     config_format: Option<ConfigFormat>,
-) -> Result<Settings, ConfigError> {
-    let mut builder = Config::builder()
+) -> Result<Config, ConfigError> {
+    let mut builder = ConfigSource::builder()
         .set_default("gitignore", true)?
         .set_default("hidden", false)?
         .set_default("read_buffer_size", 64 * 1024)?;
@@ -51,32 +53,55 @@ pub fn load_settings(
     builder.build()?.try_deserialize()
 }
 
-pub fn apply_args(settings: &mut Settings, args: ListArgs) {
+pub fn load_config_with_context(
+    no_dotenv: bool,
+    dotenv: Option<&PathBuf>,
+    config_path: Option<&PathBuf>,
+    config_format: Option<ConfigFormat>,
+) -> Result<Config, Box<dyn Error>> {
+    load_dotenv(no_dotenv, dotenv)?;
+    let config = load_config(config_path, config_format)?;
+    Ok(config)
+}
+
+pub fn apply_args(config: &mut Config, args: ListArgs) {
     if !args.roots.is_empty() {
-        settings.roots = args.roots;
+        config.roots = args.roots;
     }
     if let Some(regex) = args.regex {
-        settings.regex = Some(regex);
+        config.regex = Some(regex);
     }
     if !args.include.is_empty() {
-        settings.include = args.include;
+        config.include = args.include;
     }
     if !args.exclude.is_empty() {
-        settings.exclude = args.exclude;
+        config.exclude = args.exclude;
     }
     if let Some(gitignore) = args.gitignore {
-        settings.gitignore = Some(gitignore);
+        config.gitignore = Some(gitignore);
     }
     if let Some(hidden) = args.hidden {
-        settings.hidden = Some(hidden);
+        config.hidden = Some(hidden);
     }
     if let Some(max_file_size) = args.max_file_size {
-        settings.max_file_size = Some(max_file_size);
+        config.max_file_size = Some(max_file_size);
     }
     if let Some(threads) = args.threads {
-        settings.threads = Some(threads);
+        config.threads = Some(threads);
     }
     if let Some(read_buffer_size) = args.read_buffer_size {
-        settings.read_buffer_size = Some(read_buffer_size);
+        config.read_buffer_size = Some(read_buffer_size);
     }
+}
+
+fn load_dotenv(no_dotenv: bool, dotenv: Option<&PathBuf>) -> Result<(), Box<dyn Error>> {
+    if no_dotenv {
+        return Ok(());
+    }
+    if let Some(path) = dotenv {
+        dotenvy::from_path(path)?;
+    } else {
+        let _ = dotenvy::dotenv();
+    }
+    Ok(())
 }

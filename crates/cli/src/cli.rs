@@ -33,6 +33,8 @@ pub struct Cli {
 pub enum Command {
     /// Scan and list comment marks
     List(ListArgs),
+    /// Start interactive TUI (not implemented yet)
+    Tui(TuiArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -73,6 +75,9 @@ pub struct ListArgs {
     #[arg(long)]
     pub read_buffer_size: Option<usize>,
 }
+
+#[derive(Debug, Parser)]
+pub struct TuiArgs {}
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum ConfigFormat {

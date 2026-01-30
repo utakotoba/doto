@@ -1,16 +1,14 @@
 mod cli;
-mod dotenv;
-mod run;
-mod settings;
+mod commands;
+mod config;
 
 use std::error::Error;
 
 use clap::Parser;
 
 use crate::cli::{Cli, Command};
-use crate::dotenv::load_dotenv;
-use crate::run::run_list;
-use crate::settings::{apply_args, load_settings};
+use crate::commands::{run_list, run_tui};
+use crate::config::{apply_args, load_config_with_context};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
@@ -22,12 +20,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         command,
     } = cli;
 
+    let config =
+        load_config_with_context(no_dotenv, dotenv.as_ref(), config.as_ref(), config_format)?;
+
     match command {
         Command::List(args) => {
-            load_dotenv(no_dotenv, dotenv.as_ref())?;
-            let mut settings = load_settings(config.as_ref(), config_format)?;
-            apply_args(&mut settings, args);
-            run_list(settings)?;
+            let mut config = config;
+            apply_args(&mut config, args);
+            run_list(config)?;
+        }
+        Command::Tui(args) => {
+            run_tui(config, args)?;
         }
     }
 
