@@ -1,0 +1,31 @@
+# MARK: - workspace metadata
+[workspace]
+resolver = "3"
+members = ["core", "cli"]
+
+# MARK: - workspace shared
+[workspace.package]
+version = "0.1.0"
+authors = ["Ly"]
+license = "MIT"
+edition = "2024"
+rust-version = "1.87"
+repository = "https://github.com/utakotoba/koda"
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+
+# MARK: - dependency catalog
+[workspace.dependencies]
+
+# MARK: - build profile
+[profile.release]
+opt-level = 3
+lto = true
+panic = "abort"
