@@ -74,6 +74,34 @@ pub struct ListArgs {
     /// Read buffer size in bytes
     #[arg(long)]
     pub read_buffer_size: Option<usize>,
+
+    /// Sort pipeline stages (comma separated). Example: mark,language,filename
+    #[arg(long, value_name = "STAGES")]
+    pub sort: Option<String>,
+
+    /// Mark priority overrides (comma separated). Example: FIXME=0,TODO=1
+    #[arg(long, value_name = "PAIR")]
+    pub sort_mark_priority: Option<String>,
+
+    /// Language group ordering (count|name)
+    #[arg(long, value_enum)]
+    pub sort_lang_order: Option<SortLangOrderArg>,
+
+    /// Path group order (asc|desc)
+    #[arg(long, value_enum)]
+    pub sort_path_order: Option<SortOrderArg>,
+
+    /// Filename group order (asc|desc)
+    #[arg(long, value_enum)]
+    pub sort_filename_order: Option<SortOrderArg>,
+
+    /// Folder group depth (relative to scan root)
+    #[arg(long)]
+    pub sort_folder_depth: Option<usize>,
+
+    /// Folder group order (asc|desc)
+    #[arg(long, value_enum)]
+    pub sort_folder_order: Option<SortOrderArg>,
 }
 
 #[derive(Debug, Parser)]
@@ -84,6 +112,18 @@ pub enum ConfigFormat {
     Toml,
     Json,
     Yaml,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum SortOrderArg {
+    Asc,
+    Desc,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum SortLangOrderArg {
+    Count,
+    Name,
 }
 
 impl ConfigFormat {
