@@ -18,7 +18,6 @@ impl GroupNode {
             GroupKey::Mark(value) => format!("mark: {value}"),
             GroupKey::Language(value) => format!("language: {value}"),
             GroupKey::Path(value) => format!("path: {}", display_path(value, roots)),
-            GroupKey::Filename(value) => format!("filename: {}", value.display()),
             GroupKey::Folder(value) => format!("folder: {}", display_path(value, roots)),
         }
     }
@@ -29,7 +28,6 @@ pub(crate) enum GroupKey {
     Mark(String),
     Language(String),
     Path(PathBuf),
-    Filename(PathBuf),
     Folder(PathBuf),
 }
 
@@ -87,15 +85,6 @@ fn group_by_stage(stage: &SortStage, marks: &[Mark], roots: &[PathBuf]) -> Vec<B
             group_by_key(marks, |mark| GroupKey::Language(mark.language.to_string()))
         }
         SortStage::Path(_) => group_by_key(marks, |mark| GroupKey::Path((*mark.path).clone())),
-        SortStage::Filename(_) => group_by_key(marks, |mark| {
-            let name = mark
-                .path
-                .file_name()
-                .map(Path::new)
-                .unwrap_or_else(|| Path::new(""))
-                .to_path_buf();
-            GroupKey::Filename(name)
-        }),
         SortStage::Folder(config) => group_by_key(marks, |mark| {
             GroupKey::Folder(folder_key(mark.path.as_ref(), roots, config.depth))
         }),
@@ -132,7 +121,6 @@ enum GroupKeyKey {
     Mark(String),
     Language(String),
     Path(PathBuf),
-    Filename(PathBuf),
     Folder(PathBuf),
 }
 
@@ -142,7 +130,6 @@ impl From<&GroupKey> for GroupKeyKey {
             GroupKey::Mark(value) => GroupKeyKey::Mark(value.clone()),
             GroupKey::Language(value) => GroupKeyKey::Language(value.clone()),
             GroupKey::Path(value) => GroupKeyKey::Path(value.clone()),
-            GroupKey::Filename(value) => GroupKeyKey::Filename(value.clone()),
             GroupKey::Folder(value) => GroupKeyKey::Folder(value.clone()),
         }
     }

@@ -7,7 +7,6 @@ pub(crate) enum GroupStyle {
     Mark,
     Language,
     Path,
-    Filename,
     Folder,
 }
 
@@ -17,7 +16,6 @@ impl GroupStyle {
             GroupStyle::Mark => input.bold(),
             GroupStyle::Language => input.magenta().bold(),
             GroupStyle::Path => input.bright_black(),
-            GroupStyle::Filename => input.bright_black(),
             GroupStyle::Folder => input.bright_black(),
         }
     }
@@ -40,7 +38,6 @@ pub(crate) fn group_style_for(key: &GroupKey) -> GroupStyle {
         GroupKey::Mark(_) => GroupStyle::Mark,
         GroupKey::Language(_) => GroupStyle::Language,
         GroupKey::Path(_) => GroupStyle::Path,
-        GroupKey::Filename(_) => GroupStyle::Filename,
         GroupKey::Folder(_) => GroupStyle::Folder,
     }
 }
