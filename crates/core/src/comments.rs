@@ -339,37 +339,25 @@ fn find_ranges(
 ) {
     let len = line.len();
     let mut cursor = 0;
-    let mut interesting = [false; 256];
-    let mut interesting_bytes = [0u8; 8];
-    let mut interesting_len = 0usize;
-
-    let mut push_interesting = |byte: u8| {
-        if !interesting[byte as usize] {
-            interesting[byte as usize] = true;
-            if interesting_len < interesting_bytes.len() {
-                interesting_bytes[interesting_len] = byte;
-                interesting_len += 1;
-            }
-        }
-    };
+    let mut interesting = InterestingBytes::new();
 
     for delim in spec.strings {
         if let Some(&first) = delim.token.first() {
-            push_interesting(first);
+            interesting.push(first);
         }
     }
     if let Some(token) = spec.line_comment {
         if let Some(&first) = token.first() {
-            push_interesting(first);
+            interesting.push(first);
         }
     }
     if let Some((start, _)) = spec.block_comment {
         if let Some(&first) = start.first() {
-            push_interesting(first);
+            interesting.push(first);
         }
     }
     if spec.raw_string {
-        push_interesting(b'r');
+        interesting.push(b'r');
     }
 
     if state.in_block {
@@ -423,21 +411,12 @@ fn find_ranges(
             return;
         }
 
-        if interesting_len <= 3 {
-            if !interesting[line[idx] as usize] {
-                if let Some(next) = find_next_interesting(
-                    line,
-                    idx + 1,
-                    &interesting_bytes[..interesting_len],
-                ) {
-                    idx = next;
-                } else {
-                    break;
-                }
+        if !interesting.contains(line[idx]) {
+            if let Some(next) = interesting.next_index(line, idx + 1) {
+                idx = next;
+            } else {
+                break;
             }
-        } else if !interesting[line[idx] as usize] {
-            idx += 1;
-            continue;
         }
 
         if spec.raw_string {
@@ -498,6 +477,55 @@ fn find_next_interesting(line: &[u8], start: usize, interesting: &[u8]) -> Optio
         _ => memchr3(interesting[0], interesting[1], interesting[2], hay),
     }?;
     Some(start + offset)
+}
+
+struct InterestingBytes {
+    table: [bool; 256],
+    list: [u8; 8],
+    len: usize,
+}
+
+impl InterestingBytes {
+    fn new() -> Self {
+        Self {
+            table: [false; 256],
+            list: [0u8; 8],
+            len: 0,
+        }
+    }
+
+    fn push(&mut self, byte: u8) {
+        if !self.table[byte as usize] {
+            self.table[byte as usize] = true;
+            if self.len < self.list.len() {
+                self.list[self.len] = byte;
+                self.len += 1;
+            }
+        }
+    }
+
+    fn contains(&self, byte: u8) -> bool {
+        self.table[byte as usize]
+    }
+
+    fn next_index(&self, line: &[u8], start: usize) -> Option<usize> {
+        if start >= line.len() {
+            return None;
+        }
+        // Use memchr when the candidate set is small; otherwise fall back to
+        // linear skipping via the table to avoid building a larger searcher.
+        if self.len <= 3 {
+            return find_next_interesting(line, start, &self.list[..self.len]);
+        }
+        let mut idx = start;
+        while idx < line.len() {
+            if self.contains(line[idx]) {
+                return Some(idx);
+            }
+            idx += 1;
+        }
+        None
+    }
 }
 
 fn find_string_start(line: &[u8], strings: &[StringDelim], idx: usize) -> Option<usize> {

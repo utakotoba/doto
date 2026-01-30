@@ -69,12 +69,7 @@ pub fn apply_builtin_excludes(builder: &mut OverrideBuilder) -> Result<(), ignor
 }
 
 pub fn normalize_mark(input: &str) -> Option<&'static str> {
-    for entry in DEFAULT_MARK_PRIORITIES {
-        if entry.mark.eq_ignore_ascii_case(input) {
-            return Some(entry.mark);
-        }
-    }
-    None
+    normalize_mark_bytes(input.as_bytes())
 }
 
 pub fn normalize_mark_bytes(input: &[u8]) -> Option<&'static str> {
