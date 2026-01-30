@@ -60,3 +60,20 @@ const note = `// TODO: not a comment`;
     assert_eq!(marks[0].1, "TODO");
     Ok(())
 }
+
+#[test]
+fn scan_respects_python_triple_quotes() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let file_path = temp.path().join("main.py");
+    let contents = r#"
+doc = """// TODO: not a comment"""
+# TODO: comment
+"#;
+    fs::write(&file_path, contents)?;
+
+    let config = ScanConfig::builder().root(temp.path()).build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.matches, 1);
+    Ok(())
+}

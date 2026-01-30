@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use regex::bytes::Regex;
 
-use crate::comments::{BlockState, CommentSyntax, find_comment_ranges};
+use crate::comments::{BlockState, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::model::Mark;
@@ -26,7 +26,7 @@ pub fn scan_file(
     cancellation: &Option<CancellationToken>,
     output: &mut Vec<Mark>,
 ) -> io::Result<ScanOutcome> {
-    let Some(syntax) = CommentSyntax::for_path(path) else {
+    let Some(syntax) = syntax_for_path(path) else {
         return Ok(ScanOutcome::Skipped(SkipReason::UnsupportedSyntax));
     };
 
