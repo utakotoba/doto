@@ -91,9 +91,6 @@ pub struct ListArgs {
     #[arg(long, value_enum)]
     pub sort_path_order: Option<SortOrderArg>,
 
-    /// Filename group order (asc|desc)
-    #[arg(long, value_enum)]
-    pub sort_filename_order: Option<SortOrderArg>,
 
     /// Folder group depth (relative to scan root)
     #[arg(long)]
@@ -102,6 +99,10 @@ pub struct ListArgs {
     /// Folder group order (asc|desc)
     #[arg(long, value_enum)]
     pub sort_folder_order: Option<SortOrderArg>,
+
+    /// Disable file headers in output
+    #[arg(long)]
+    pub no_file_header: bool,
 }
 
 #[derive(Debug, Parser)]

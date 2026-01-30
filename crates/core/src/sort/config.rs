@@ -18,7 +18,7 @@ impl Default for SortConfig {
             pipeline: vec![
                 SortStage::Mark(MarkSortConfig::default()),
                 SortStage::Language(LanguageSortConfig::default()),
-                SortStage::Path(PathSortConfig::default()),
+                SortStage::Folder(FolderSortConfig::default()),
             ],
         }
     }
@@ -30,7 +30,6 @@ pub enum SortStage {
     Mark(MarkSortConfig),
     Language(LanguageSortConfig),
     Path(PathSortConfig),
-    Filename(FilenameSortConfig),
     Folder(FolderSortConfig),
 }
 
@@ -82,18 +81,6 @@ pub struct PathSortConfig {
 }
 
 impl Default for PathSortConfig {
-    fn default() -> Self {
-        Self { order: Order::Asc }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(default)]
-pub struct FilenameSortConfig {
-    pub order: Order,
-}
-
-impl Default for FilenameSortConfig {
     fn default() -> Self {
         Self { order: Order::Asc }
     }

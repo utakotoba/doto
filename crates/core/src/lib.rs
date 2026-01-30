@@ -13,8 +13,8 @@ pub use error::ScanError;
 pub use model::{Mark, ScanResult, ScanStats, ScanWarning};
 pub use scanner::Scanner;
 pub use sort::{
-    FilenameSortConfig, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
-    MarkSortConfig, Order, PathSortConfig, SortConfig, SortStage,
+    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
+    Order, PathSortConfig, SortConfig, SortStage,
 };
 
 pub fn scan(config: ScanConfig) -> Result<ScanResult, ScanError> {

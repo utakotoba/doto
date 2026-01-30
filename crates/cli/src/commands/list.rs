@@ -2,6 +2,7 @@ use std::error::Error;
 use std::io::{self, Write};
 
 use koda_core::{ScanConfig, scan};
+use colored::Colorize;
 
 use crate::commands::renderer::render_list;
 use crate::config::Config;
@@ -44,18 +45,27 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     }
 
     let result = scan(builder.build())?;
-    render_list(&result, &roots, config.sort.as_ref())?;
+    render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
 
     if !warnings.is_empty() || !result.warnings.is_empty() {
         let mut stderr = io::BufWriter::new(io::stderr());
+        writeln!(stderr)?;
         for warning in warnings {
-            writeln!(stderr, "warning: {warning}")?;
+            writeln!(stderr, "{}", format!("warning: {warning}").yellow())?;
         }
         for warning in result.warnings {
             if let Some(path) = warning.path {
-                writeln!(stderr, "warning: {}: {}", path.display(), warning.message)?;
+                writeln!(
+                    stderr,
+                    "{}",
+                    format!("warning: {}: {}", path.display(), warning.message).yellow()
+                )?;
             } else {
-                writeln!(stderr, "warning: {}", warning.message)?;
+                writeln!(
+                    stderr,
+                    "{}",
+                    format!("warning: {}", warning.message).yellow()
+                )?;
             }
         }
         stderr.flush()?;

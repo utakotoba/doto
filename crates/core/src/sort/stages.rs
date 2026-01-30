@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 use crate::constants::{DEFAULT_MARK_PRIORITIES, normalize_mark};
 use crate::model::Mark;
 use crate::sort::config::{
-    FilenameSortConfig, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
-    MarkSortConfig, Order, PathSortConfig, SortStage,
+    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
+    Order, PathSortConfig, SortStage,
 };
 
 #[derive(Debug)]
@@ -19,7 +19,6 @@ enum GroupKey {
     Mark(&'static str),
     Language(&'static str),
     Path(PathBuf),
-    Filename(PathBuf),
     Folder(PathBuf),
 }
 
@@ -32,7 +31,6 @@ pub(crate) fn group_for_stage(
         SortStage::Mark(config) => group_by_mark(items, config),
         SortStage::Language(config) => group_by_language(items, config),
         SortStage::Path(config) => group_by_path(items, config),
-        SortStage::Filename(config) => group_by_filename(items, config),
         SortStage::Folder(config) => group_by_folder(items, config, roots),
     }
 }
@@ -117,35 +115,6 @@ fn group_by_path(items: Vec<Mark>, config: &PathSortConfig) -> Vec<Group> {
         .collect::<Vec<_>>();
     groups.sort_by(|a, b| {
         let (GroupKey::Path(a_key), GroupKey::Path(b_key)) = (&a.key, &b.key) else {
-            return std::cmp::Ordering::Equal;
-        };
-        match config.order {
-            Order::Asc => a_key.cmp(b_key),
-            Order::Desc => b_key.cmp(a_key),
-        }
-    });
-    groups
-}
-
-fn group_by_filename(items: Vec<Mark>, config: &FilenameSortConfig) -> Vec<Group> {
-    let mut map: HashMap<PathBuf, Vec<Mark>> = HashMap::new();
-    for mark in items {
-        let file_name = mark
-            .path
-            .file_name()
-            .map(Path::new)
-            .unwrap_or_else(|| Path::new(""));
-        map.entry(file_name.to_path_buf()).or_default().push(mark);
-    }
-    let mut groups = map
-        .into_iter()
-        .map(|(key, items)| Group {
-            key: GroupKey::Filename(key),
-            items,
-        })
-        .collect::<Vec<_>>();
-    groups.sort_by(|a, b| {
-        let (GroupKey::Filename(a_key), GroupKey::Filename(b_key)) = (&a.key, &b.key) else {
             return std::cmp::Ordering::Equal;
         };
         match config.order {

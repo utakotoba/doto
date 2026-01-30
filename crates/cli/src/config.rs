@@ -6,8 +6,8 @@ use config::{Config as ConfigSource, ConfigError, Environment, File};
 use serde::Deserialize;
 
 use koda_core::{
-    FilenameSortConfig, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
-    MarkSortConfig, Order, PathSortConfig, SortConfig, SortStage,
+    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
+    Order, PathSortConfig, SortConfig, SortStage,
 };
 
 use crate::cli::{ConfigFormat, ListArgs, SortLangOrderArg, SortOrderArg};
@@ -25,6 +25,7 @@ pub struct Config {
     pub threads: Option<usize>,
     pub read_buffer_size: Option<usize>,
     pub sort: Option<SortConfig>,
+    pub file_header: bool,
 }
 
 pub fn load_config(
@@ -34,7 +35,8 @@ pub fn load_config(
     let mut builder = ConfigSource::builder()
         .set_default("gitignore", true)?
         .set_default("hidden", false)?
-        .set_default("read_buffer_size", 64 * 1024)?;
+        .set_default("read_buffer_size", 64 * 1024)?
+        .set_default("file_header", true)?;
 
     if let Some(path) = config_path {
         builder = match config_format {
@@ -98,6 +100,9 @@ pub fn apply_args(config: &mut Config, args: &ListArgs) {
     if let Some(read_buffer_size) = args.read_buffer_size {
         config.read_buffer_size = Some(read_buffer_size);
     }
+    if args.no_file_header {
+        config.file_header = false;
+    }
 }
 
 pub fn resolve_sort_config(
@@ -138,15 +143,6 @@ pub fn resolve_sort_config(
         }
     }
 
-    if let Some(order) = args.sort_filename_order {
-        let applied = apply_filename_order(&mut config.pipeline, order);
-        if applied == 0 {
-            warnings.push(
-                "sort-filename-order provided but pipeline has no filename stage".to_string(),
-            );
-        }
-    }
-
     if args.sort_folder_depth.is_some() || args.sort_folder_order.is_some() {
         let applied = apply_folder_options(
             &mut config.pipeline,
@@ -178,7 +174,6 @@ fn has_sort_options(args: &ListArgs) -> bool {
     args.sort_mark_priority.is_some()
         || args.sort_lang_order.is_some()
         || args.sort_path_order.is_some()
-        || args.sort_filename_order.is_some()
         || args.sort_folder_depth.is_some()
         || args.sort_folder_order.is_some()
 }
@@ -190,7 +185,6 @@ fn parse_pipeline(raw: &str) -> Result<Vec<SortStage>, Box<dyn Error>> {
             "mark" => SortStage::Mark(MarkSortConfig::default()),
             "language" => SortStage::Language(LanguageSortConfig::default()),
             "path" => SortStage::Path(PathSortConfig::default()),
-            "filename" => SortStage::Filename(FilenameSortConfig::default()),
             "folder" => SortStage::Folder(FolderSortConfig::default()),
             _ => {
                 return Err(format!("unknown sort stage '{token}'").into());
@@ -263,17 +257,6 @@ fn apply_path_order(pipeline: &mut [SortStage], order: SortOrderArg) -> usize {
     let mut applied = 0;
     for stage in pipeline {
         if let SortStage::Path(config) = stage {
-            config.order = map_order(order);
-            applied += 1;
-        }
-    }
-    applied
-}
-
-fn apply_filename_order(pipeline: &mut [SortStage], order: SortOrderArg) -> usize {
-    let mut applied = 0;
-    for stage in pipeline {
-        if let SortStage::Filename(config) = stage {
             config.order = map_order(order);
             applied += 1;
         }
