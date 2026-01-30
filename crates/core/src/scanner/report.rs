@@ -1,21 +1,13 @@
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
-use crate::model::{Mark, ScanWarning};
+use crate::model::ScanWarning;
 
-pub fn push_marks(store: &Arc<Mutex<Vec<Mark>>>, mut marks: Vec<Mark>) {
-    if marks.is_empty() {
-        return;
-    }
-    let mut guard = store.lock().unwrap_or_else(|err| err.into_inner());
-    guard.append(&mut marks);
-}
-
-pub fn push_warning(
-    store: &Arc<Mutex<Vec<ScanWarning>>>,
+pub fn record_warning(
     progress: &Option<Arc<dyn ProgressReporter>>,
+    warnings: &mut Vec<ScanWarning>,
     path: Option<std::path::PathBuf>,
     message: String,
 ) {
@@ -23,8 +15,7 @@ pub fn push_warning(
     if let Some(progress) = progress.as_deref() {
         progress.on_warning(&warning);
     }
-    let mut guard = store.lock().unwrap_or_else(|err| err.into_inner());
-    guard.push(warning);
+    warnings.push(warning);
 }
 
 pub fn report_file_scanned(progress: &Option<Arc<dyn ProgressReporter>>, path: &Path) {
