@@ -13,9 +13,10 @@ use crate::config::{DetectionConfig, ScanConfig};
 use crate::control::SkipReason;
 use crate::error::ScanError;
 use crate::model::{Mark, ScanResult, ScanStats, ScanWarning};
-use crate::scanner::file::{scan_file, ScanOutcome};
+use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
-    is_cancelled, mark_cancelled, push_marks, push_warning, report_file_scanned, report_file_skipped,
+    is_cancelled, mark_cancelled, push_marks, push_warning, report_file_scanned,
+    report_file_skipped,
 };
 use crate::scanner::stats::ScanCounters;
 use crate::scanner::walk::build_walk_builder;

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use koda_core::{scan, ScanConfig};
+use koda_core::{ScanConfig, scan};
 use tempfile::TempDir;
 
 #[test]

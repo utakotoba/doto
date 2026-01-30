@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use koda_core::{scan, ScanConfig};
+use koda_core::{ScanConfig, scan};
 use tempfile::TempDir;
 
 #[test]
@@ -17,10 +17,7 @@ fn scan_multiple_roots() -> Result<(), Box<dyn Error>> {
     fs::write(&a_file, "// TODO a\n")?;
     fs::write(&b_file, "// TODO b\n")?;
 
-    let config = ScanConfig::builder()
-        .root(&root_a)
-        .root(&root_b)
-        .build();
+    let config = ScanConfig::builder().root(&root_a).root(&root_b).build();
     let result = scan(config)?;
 
     let mut paths = result

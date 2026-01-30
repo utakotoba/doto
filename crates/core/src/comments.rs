@@ -9,8 +9,12 @@ pub enum CommentSyntax {
 
 impl CommentSyntax {
     pub fn for_path(path: &Path) -> Option<Self> {
-        let ext = path.extension().map(|ext| ext.to_string_lossy().to_ascii_lowercase());
-        let name = path.file_name().map(|name| name.to_string_lossy().to_ascii_lowercase());
+        let ext = path
+            .extension()
+            .map(|ext| ext.to_string_lossy().to_ascii_lowercase());
+        let name = path
+            .file_name()
+            .map(|name| name.to_string_lossy().to_ascii_lowercase());
         if let Some(name) = name.as_deref() {
             if name == "makefile" {
                 return Some(CommentSyntax::Line(b"#"));
@@ -22,18 +26,14 @@ impl CommentSyntax {
         let ext = ext.as_deref()?;
         let syntax = match ext {
             "rs" | "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" | "java" | "kt"
-            | "kts" | "swift" | "go" | "cs" | "scala" | "dart" => {
-                CommentSyntax::CStyle {
-                    allow_backtick: false,
-                }
-            }
+            | "kts" | "swift" | "go" | "cs" | "scala" | "dart" => CommentSyntax::CStyle {
+                allow_backtick: false,
+            },
             "js" | "jsx" | "ts" | "tsx" => CommentSyntax::CStyle {
                 allow_backtick: true,
             },
-            "py" | "rb" | "sh" | "bash" | "zsh" | "yml" | "yaml" | "toml" | "ini"
-            | "cfg" | "conf" | "env" => {
-                CommentSyntax::Hash
-            }
+            "py" | "rb" | "sh" | "bash" | "zsh" | "yml" | "yaml" | "toml" | "ini" | "cfg"
+            | "conf" | "env" => CommentSyntax::Hash,
             "lua" => CommentSyntax::Line(b"--"),
             "mk" => CommentSyntax::Line(b"#"),
             _ => return None,
@@ -183,9 +183,7 @@ fn find_subslice_from(haystack: &[u8], needle: &[u8], start: usize) -> Option<us
     let end = haystack.len() - needle.len();
     let mut idx = start;
     while idx <= end {
-        if haystack[idx] == needle[0]
-            && haystack[idx..idx + needle.len()] == needle[..]
-        {
+        if haystack[idx] == needle[0] && haystack[idx..idx + needle.len()] == needle[..] {
             return Some(idx);
         }
         idx += 1;

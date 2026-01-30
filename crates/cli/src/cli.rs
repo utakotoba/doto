@@ -3,7 +3,11 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
-#[command(name = "koda", version, about = "Track TODO/FIXME marks in a workspace")]
+#[command(
+    name = "koda",
+    version,
+    about = "Track TODO/FIXME marks in a workspace"
+)]
 pub struct Cli {
     /// Optional config file path (toml/json/yaml)
     #[arg(long, global = true)]

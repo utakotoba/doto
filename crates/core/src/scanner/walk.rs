@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
+use ignore::overrides::OverrideBuilder;
 
 use crate::config::ScanConfig;
 use crate::error::ScanError;

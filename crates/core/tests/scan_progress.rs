@@ -1,10 +1,10 @@
 use std::error::Error;
 use std::fs;
 use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-use koda_core::{scan, CancellationToken, ProgressReporter, ScanConfig, SkipReason};
+use koda_core::{CancellationToken, ProgressReporter, ScanConfig, SkipReason, scan};
 use tempfile::TempDir;
 
 #[derive(Default)]

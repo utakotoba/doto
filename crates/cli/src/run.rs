@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::{self, Write};
 
-use koda_core::{scan, ScanConfig};
+use koda_core::{ScanConfig, scan};
 
 use crate::settings::Settings;
 
