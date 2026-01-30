@@ -4,7 +4,7 @@ use std::path::Path;
 pub enum CommentSyntax {
     Line(&'static [u8]),
     Hash,
-    CStyle,
+    CStyle { allow_backtick: bool },
 }
 
 impl CommentSyntax {
@@ -21,9 +21,15 @@ impl CommentSyntax {
         }
         let ext = ext.as_deref()?;
         let syntax = match ext {
-            "rs" | "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" | "js" | "jsx"
-            | "ts" | "tsx" | "java" | "kt" | "kts" | "swift" | "go" | "cs" | "scala"
-            | "dart" => CommentSyntax::CStyle,
+            "rs" | "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" | "java" | "kt"
+            | "kts" | "swift" | "go" | "cs" | "scala" | "dart" => {
+                CommentSyntax::CStyle {
+                    allow_backtick: false,
+                }
+            }
+            "js" | "jsx" | "ts" | "tsx" => CommentSyntax::CStyle {
+                allow_backtick: true,
+            },
             "py" | "rb" | "sh" | "bash" | "zsh" | "yml" | "yaml" | "toml" | "ini"
             | "cfg" | "conf" | "env" => {
                 CommentSyntax::Hash
@@ -60,8 +66,8 @@ pub fn find_comment_ranges(
                 on_range(idx, line.len());
             }
         }
-        CommentSyntax::CStyle => {
-            find_cstyle_ranges(line, state, &mut on_range);
+        CommentSyntax::CStyle { allow_backtick } => {
+            find_cstyle_ranges(line, state, allow_backtick, &mut on_range);
         }
     }
 }
@@ -69,6 +75,7 @@ pub fn find_comment_ranges(
 fn find_cstyle_ranges(
     line: &[u8],
     state: &mut BlockState,
+    allow_backtick: bool,
     on_range: &mut impl FnMut(usize, usize),
 ) {
     let mut cursor = 0;
@@ -100,7 +107,7 @@ fn find_cstyle_ranges(
                 continue;
             }
 
-            if byte == b'"' || byte == b'\'' {
+            if byte == b'"' || byte == b'\'' || (allow_backtick && byte == b'`') {
                 state.in_string = Some(byte);
                 idx += 1;
                 continue;
@@ -122,6 +129,15 @@ fn find_cstyle_ranges(
             }
 
             idx += 1;
+        }
+        if allow_backtick {
+            if state.in_string != Some(b'`') {
+                state.in_string = None;
+                state.escape = false;
+            }
+        } else {
+            state.in_string = None;
+            state.escape = false;
         }
         return;
     }
