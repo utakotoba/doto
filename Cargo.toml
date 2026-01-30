@@ -1,7 +1,7 @@
 # MARK: - workspace metadata
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["crates/*", "bench"]
 
 # MARK: - workspace shared
 [workspace.package]
@@ -32,6 +32,7 @@ config = "0.14"
 serde = { version = "1.0", features = ["derive"] }
 dotenvy = "0.15"
 colored = "3.1.1"
+rand = "0.8"
 
 # MARK: - build profile
 [profile.release]
