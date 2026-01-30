@@ -23,6 +23,9 @@ expect_used = "warn"
 
 # MARK: - dependency catalog
 [workspace.dependencies]
+ignore = "0.4"
+regex = "1.10"
+thiserror = "1.0"
 
 # MARK: - build profile
 [profile.release]
