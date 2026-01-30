@@ -12,6 +12,7 @@ pub struct SyntaxSpec {
     pub line_comment: Option<&'static [u8]>,
     pub block_comment: Option<(&'static [u8], &'static [u8])>,
     pub strings: &'static [StringDelim],
+    pub raw_string: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -127,42 +128,81 @@ const C_STYLE: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"//"),
     block_comment: Some((b"/*", b"*/")),
     strings: C_STYLE_STRINGS,
+    raw_string: false,
 };
 
 const C_STYLE_JS: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"//"),
     block_comment: Some((b"/*", b"*/")),
     strings: C_STYLE_JS_STRINGS,
+    raw_string: false,
 };
 
 const HASH_SIMPLE: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"#"),
     block_comment: None,
     strings: HASH_STRINGS,
+    raw_string: false,
 };
 
 const HASH_PY: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"#"),
     block_comment: None,
     strings: PY_STRINGS,
+    raw_string: false,
 };
 
 const HASH_TOML: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"#"),
     block_comment: None,
     strings: TOML_STRINGS,
+    raw_string: false,
 };
 
 const HASH_SHELL: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"#"),
     block_comment: None,
     strings: SHELL_STRINGS,
+    raw_string: false,
 };
 
 const LUA: SyntaxSpec = SyntaxSpec {
     line_comment: Some(b"--"),
     block_comment: None,
     strings: HASH_STRINGS,
+    raw_string: false,
+};
+
+const GO_STRINGS: &[StringDelim] = &[
+    StringDelim {
+        token: b"`",
+        multiline: true,
+        escape: false,
+    },
+    StringDelim {
+        token: b"\"",
+        multiline: false,
+        escape: true,
+    },
+    StringDelim {
+        token: b"'",
+        multiline: false,
+        escape: true,
+    },
+];
+
+const GO: SyntaxSpec = SyntaxSpec {
+    line_comment: Some(b"//"),
+    block_comment: Some((b"/*", b"*/")),
+    strings: GO_STRINGS,
+    raw_string: false,
+};
+
+const RUST: SyntaxSpec = SyntaxSpec {
+    line_comment: Some(b"//"),
+    block_comment: Some((b"/*", b"*/")),
+    strings: C_STYLE_STRINGS,
+    raw_string: true,
 };
 
 pub fn syntax_for_path(path: &Path) -> Option<SyntaxInfo> {
@@ -189,7 +229,7 @@ pub fn syntax_for_path(path: &Path) -> Option<SyntaxInfo> {
     let ext = ext.as_deref()?;
     match ext {
         "rs" => Some(SyntaxInfo {
-            spec: &C_STYLE,
+            spec: &RUST,
             language: "rs",
         }),
         "c" | "h" => Some(SyntaxInfo {
@@ -213,7 +253,7 @@ pub fn syntax_for_path(path: &Path) -> Option<SyntaxInfo> {
             language: "swift",
         }),
         "go" => Some(SyntaxInfo {
-            spec: &C_STYLE,
+            spec: &GO,
             language: "go",
         }),
         "cs" => Some(SyntaxInfo {
@@ -277,6 +317,7 @@ pub struct BlockState {
     pub in_block: bool,
     in_string: Option<usize>,
     escape: bool,
+    raw_string_hash: Option<usize>,
 }
 
 pub fn find_comment_ranges(
@@ -302,6 +343,7 @@ fn find_ranges(
             state.in_block = false;
             state.in_string = None;
             state.escape = false;
+            state.raw_string_hash = None;
             return;
         };
         if let Some(end) = find_subslice_from(line, end_token, cursor) {
@@ -336,6 +378,23 @@ fn find_ranges(
             }
             idx += 1;
             continue;
+        }
+
+        if let Some(hash_count) = state.raw_string_hash {
+            if let Some(end_idx) = find_raw_string_end(line, idx, hash_count) {
+                idx = end_idx;
+                state.raw_string_hash = None;
+                continue;
+            }
+            return;
+        }
+
+        if spec.raw_string {
+            if let Some((hash_count, consumed)) = parse_raw_string_start(line, idx) {
+                state.raw_string_hash = Some(hash_count);
+                idx += consumed;
+                continue;
+            }
         }
 
         if let Some(string_idx) = find_string_start(line, spec.strings, idx) {
@@ -399,6 +458,49 @@ fn find_subslice_from(haystack: &[u8], needle: &[u8], start: usize) -> Option<us
     while idx <= end {
         if haystack[idx] == needle[0] && haystack[idx..idx + needle.len()] == needle[..] {
             return Some(idx);
+        }
+        idx += 1;
+    }
+    None
+}
+
+fn parse_raw_string_start(line: &[u8], idx: usize) -> Option<(usize, usize)> {
+    if idx >= line.len() || line[idx] != b'r' {
+        return None;
+    }
+    if idx > 0 && line[idx - 1].is_ascii_alphanumeric() {
+        return None;
+    }
+    let mut pos = idx + 1;
+    let mut hashes = 0usize;
+    while pos < line.len() && line[pos] == b'#' {
+        hashes += 1;
+        pos += 1;
+    }
+    if pos < line.len() && line[pos] == b'"' {
+        return Some((hashes, pos - idx + 1));
+    }
+    None
+}
+
+fn find_raw_string_end(line: &[u8], start: usize, hashes: usize) -> Option<usize> {
+    if start >= line.len() {
+        return None;
+    }
+    let mut idx = start;
+    while idx < line.len() {
+        if line[idx] == b'"' {
+            let mut ok = true;
+            for offset in 0..hashes {
+                let pos = idx + 1 + offset;
+                if pos >= line.len() || line[pos] != b'#' {
+                    ok = false;
+                    break;
+                }
+            }
+            if ok {
+                return Some(idx + 1 + hashes);
+            }
         }
         idx += 1;
     }

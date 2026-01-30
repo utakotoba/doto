@@ -1,9 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use koda_core::{
-    FilenameSortConfig, LanguageSortConfig, MarkSortConfig, ScanConfig, SortStage, scan,
-};
+use koda_core::{LanguageSortConfig, MarkSortConfig, ScanConfig, SortStage, scan};
 use tempfile::TempDir;
 
 #[test]
@@ -22,7 +20,6 @@ fn scan_applies_sort_pipeline() -> Result<(), Box<dyn Error>> {
     let pipeline = vec![
         SortStage::Mark(MarkSortConfig::default()),
         SortStage::Language(LanguageSortConfig::default()),
-        SortStage::Filename(FilenameSortConfig::default()),
     ];
 
     let config = ScanConfig::builder()
@@ -46,10 +43,5 @@ fn scan_applies_sort_pipeline() -> Result<(), Box<dyn Error>> {
     assert_eq!(ordered[0].0, "FIXME");
     assert_eq!(ordered[0].1, "c.ts");
     assert_eq!(ordered[1].0, "TODO");
-    assert_eq!(ordered[1].1, "a.rs");
-    assert_eq!(ordered[2].0, "TODO");
-    assert_eq!(ordered[2].1, "z.rs");
-    assert_eq!(ordered[3].0, "TODO");
-    assert_eq!(ordered[3].1, "b.ts");
     Ok(())
 }

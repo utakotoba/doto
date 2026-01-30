@@ -77,3 +77,22 @@ doc = """// TODO: not a comment"""
     assert_eq!(result.stats.matches, 1);
     Ok(())
 }
+
+#[test]
+fn scan_ignores_go_raw_string_literals() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let file_path = temp.path().join("main.go");
+    let contents = r#"
+package main
+
+const note = `// TODO: not a comment`
+// TODO: comment
+"#;
+    fs::write(&file_path, contents)?;
+
+    let config = ScanConfig::builder().root(temp.path()).build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.matches, 1);
+    Ok(())
+}
