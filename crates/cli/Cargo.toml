@@ -6,3 +6,10 @@ license.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
+
+[dependencies]
+clap.workspace = true
+config.workspace = true
+dotenvy.workspace = true
+koda-core = { path = "../core" }
+serde.workspace = true
