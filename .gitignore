@@ -1,0 +1,9 @@
+# cargo
+/target
+
+# ly's choice
+/.codex
+/references
+
+# os-related
+.DS_Store
