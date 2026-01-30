@@ -1,4 +1,4 @@
-### koda &middot; comment mark tracker
+### doto &middot; comment mark tracker
 
 Track, filter, and navigate code comment anchors like TODO, NOTE and FIXME directly from your terminal.
 

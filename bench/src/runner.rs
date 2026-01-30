@@ -6,7 +6,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use tempfile::TempDir;
 
-use koda_core::{ScanConfig, scan};
+use doto_core::{ScanConfig, scan};
 
 use colored::Colorize;
 

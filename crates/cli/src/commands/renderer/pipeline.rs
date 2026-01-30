@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use koda_core::{Mark, SortStage};
+use doto_core::{Mark, SortStage};
 
 
 #[derive(Debug)]

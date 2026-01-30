@@ -6,7 +6,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-use koda_core::{Mark, ScanResult, SortConfig};
+use doto_core::{Mark, ScanResult, SortConfig};
 
 use crate::commands::renderer::pipeline::{GroupKey, GroupNode, build_group_tree};
 use crate::commands::renderer::snippet::SnippetCache;

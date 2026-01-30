@@ -315,6 +315,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
+name = "doto"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colored",
+ "config",
+ "dotenvy",
+ "doto-core",
+ "serde",
+]
+
+[[package]]
+name = "doto-bench"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colored",
+ "doto-core",
+ "rand",
+ "tempfile",
+]
+
+[[package]]
+name = "doto-core"
+version = "0.1.0"
+dependencies = [
+ "ignore",
+ "regex",
+ "serde",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -469,40 +503,6 @@ dependencies = [
  "pest",
  "pest_derive",
  "serde",
-]
-
-[[package]]
-name = "koda"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colored",
- "config",
- "dotenvy",
- "koda-core",
- "serde",
-]
-
-[[package]]
-name = "koda-bench"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colored",
- "koda-core",
- "rand",
- "tempfile",
-]
-
-[[package]]
-name = "koda-core"
-version = "0.1.0"
-dependencies = [
- "ignore",
- "regex",
- "serde",
- "tempfile",
- "thiserror",
 ]
 
 [[package]]

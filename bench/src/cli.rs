@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 
 #[derive(Debug, Parser)]
-#[command(name = "koda-bench", version, about = "Synthetic benchmark generator for koda")]
+#[command(name = "doto-bench", version, about = "Synthetic benchmark generator for doto")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use koda_core::{LanguageSortConfig, MarkSortConfig, ScanConfig, SortStage, scan};
+use doto_core::{LanguageSortConfig, MarkSortConfig, ScanConfig, SortStage, scan};
 use tempfile::TempDir;
 
 #[test]

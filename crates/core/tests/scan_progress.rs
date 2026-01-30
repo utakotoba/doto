@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use koda_core::{CancellationToken, ProgressReporter, ScanConfig, SkipReason, scan};
+use doto_core::{CancellationToken, ProgressReporter, ScanConfig, SkipReason, scan};
 use tempfile::TempDir;
 
 #[derive(Default)]
@@ -26,14 +26,14 @@ impl ProgressReporter for TestProgress {
         self.files_skipped.fetch_add(1, Ordering::Relaxed);
     }
 
-    fn on_match(&self, _mark: &koda_core::Mark) {
+    fn on_match(&self, _mark: &doto_core::Mark) {
         self.matches.fetch_add(1, Ordering::Relaxed);
         if let Some(token) = &self.cancel_after_match {
             token.cancel();
         }
     }
 
-    fn on_warning(&self, _warning: &koda_core::ScanWarning) {
+    fn on_warning(&self, _warning: &doto_core::ScanWarning) {
         self.warnings.fetch_add(1, Ordering::Relaxed);
     }
 

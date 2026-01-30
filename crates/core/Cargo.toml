@@ -1,5 +1,5 @@
 [package]
-name = "koda-core"
+name = "doto-core"
 version.workspace = true
 authors.workspace = true
 license.workspace = true

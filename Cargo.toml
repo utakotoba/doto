@@ -10,7 +10,7 @@ authors = ["Ly"]
 license = "MIT"
 edition = "2024"
 rust-version = "1.87"
-repository = "https://github.com/utakotoba/koda"
+repository = "https://github.com/utakotoba/doto"
 
 [workspace.lints.rust]
 unsafe_code = "warn"
@@ -34,7 +34,7 @@ dotenvy = "0.15"
 colored = "3.1.1"
 rand = "0.8"
 # workspace crates
-koda-core = { path = "crates/core" }
+doto-core = { path = "crates/core" }
 
 # MARK: - build profile
 [profile.release]

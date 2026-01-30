@@ -5,7 +5,7 @@ use std::error::Error;
 use config::{Config as ConfigSource, ConfigError, Environment, File};
 use serde::Deserialize;
 
-use koda_core::{
+use doto_core::{
     FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
     Order, PathSortConfig, SortConfig, SortStage,
 };

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::{self, Write};
 
-use koda_core::{ScanConfig, scan};
+use doto_core::{ScanConfig, scan};
 use colored::Colorize;
 
 use crate::commands::renderer::render_list;

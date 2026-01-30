@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "koda",
+    name = "doto",
     version,
     about = "Track TODO/FIXME marks in a workspace"
 )]
