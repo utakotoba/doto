@@ -10,7 +10,7 @@ use doto_core::{
     Order, PathSortConfig, SortConfig, SortStage,
 };
 
-use crate::cli::{ConfigFormat, ListArgs, SortLangOrderArg, SortOrderArg};
+use crate::cli::{Cli, ConfigFormat, SortLangOrderArg, SortOrderArg};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -72,7 +72,7 @@ pub fn load_config_with_context(
     Ok(config)
 }
 
-pub fn apply_args(config: &mut Config, args: &ListArgs) {
+pub fn apply_args(config: &mut Config, args: &Cli) {
     if !args.roots.is_empty() {
         config.roots = args.roots.clone();
     }
@@ -107,7 +107,7 @@ pub fn apply_args(config: &mut Config, args: &ListArgs) {
 
 pub fn resolve_sort_config(
     base: Option<SortConfig>,
-    args: &ListArgs,
+    args: &Cli,
 ) -> Result<(Option<SortConfig>, Vec<String>), Box<dyn Error>> {
     let mut warnings = Vec::new();
     let mut config = if let Some(pipeline_raw) = &args.sort {
@@ -170,7 +170,7 @@ fn load_dotenv(no_dotenv: bool, dotenv: Option<&PathBuf>) -> Result<(), Box<dyn 
     Ok(())
 }
 
-fn has_sort_options(args: &ListArgs) -> bool {
+fn has_sort_options(args: &Cli) -> bool {
     args.sort_mark_priority.is_some()
         || args.sort_lang_order.is_some()
         || args.sort_path_order.is_some()

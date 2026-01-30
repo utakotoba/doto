@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -25,22 +25,8 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub no_dotenv: bool,
 
-    #[command(subcommand)]
-    pub command: Command,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum Command {
-    /// Scan and list comment marks
-    List(ListArgs),
-    /// Start interactive TUI (not implemented yet)
-    Tui(TuiArgs),
-}
-
-#[derive(Debug, Parser)]
-pub struct ListArgs {
-    /// Root paths to scan (repeatable)
-    #[arg(short = 'r', long = "root")]
+    /// Root paths to scan (positional, repeatable)
+    #[arg(value_name = "PATH")]
     pub roots: Vec<PathBuf>,
 
     /// Override regex pattern
@@ -75,7 +61,7 @@ pub struct ListArgs {
     #[arg(long)]
     pub read_buffer_size: Option<usize>,
 
-    /// Sort pipeline stages (comma separated). Example: mark,language,filename
+    /// Sort pipeline stages (comma separated). Example: mark,language,folder
     #[arg(long, value_name = "STAGES")]
     pub sort: Option<String>,
 
@@ -104,9 +90,6 @@ pub struct ListArgs {
     #[arg(long)]
     pub no_file_header: bool,
 }
-
-#[derive(Debug, Parser)]
-pub struct TuiArgs {}
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum ConfigFormat {
