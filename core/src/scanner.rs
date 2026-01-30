@@ -151,6 +151,7 @@ impl Scanner {
             .git_exclude(follow_gitignore)
             .git_global(follow_gitignore)
             .ignore(follow_gitignore)
+            .require_git(false)
             .hidden(!self.config.include_hidden());
 
         if !self.config.include().is_empty() || !self.config.exclude().is_empty() {

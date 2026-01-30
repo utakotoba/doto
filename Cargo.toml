@@ -26,6 +26,7 @@ expect_used = "warn"
 ignore = "0.4"
 regex = "1.10"
 thiserror = "1.0"
+tempfile = "3.10"
 
 # MARK: - build profile
 [profile.release]
