@@ -8,9 +8,9 @@ rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
+koda-core = { workspace = true }
 clap.workspace = true
 config.workspace = true
 dotenvy.workspace = true
-koda-core = { path = "../core" }
 serde.workspace = true
 colored.workspace = true
