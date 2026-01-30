@@ -1,8 +1,10 @@
+mod control;
 mod config;
 mod error;
 mod model;
 mod scanner;
 
+pub use control::{CancellationToken, ProgressReporter, SkipReason};
 pub use config::{DetectionConfig, ScanConfig, ScanConfigBuilder};
 pub use error::ScanError;
 pub use model::{Mark, ScanResult, ScanStats, ScanWarning};

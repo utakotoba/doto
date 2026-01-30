@@ -1,4 +1,7 @@
 use std::path::PathBuf;
+use std::sync::Arc;
+
+use crate::control::{CancellationToken, ProgressConfig, ProgressReporter};
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]
@@ -6,7 +9,7 @@ pub enum DetectionConfig {
     Regex { pattern: String },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ScanConfig {
     roots: Vec<PathBuf>,
     detection: DetectionConfig,
@@ -17,6 +20,8 @@ pub struct ScanConfig {
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
+    progress: Option<ProgressConfig>,
+    cancellation: Option<CancellationToken>,
 }
 
 impl ScanConfig {
@@ -59,9 +64,35 @@ impl ScanConfig {
     pub fn read_buffer_size(&self) -> usize {
         self.read_buffer_size
     }
+
+    pub fn progress(&self) -> Option<&ProgressConfig> {
+        self.progress.as_ref()
+    }
+
+    pub fn cancellation_token(&self) -> Option<&CancellationToken> {
+        self.cancellation.as_ref()
+    }
 }
 
-#[derive(Clone, Debug)]
+impl std::fmt::Debug for ScanConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ScanConfig")
+            .field("roots", &self.roots)
+            .field("detection", &self.detection)
+            .field("include", &self.include)
+            .field("exclude", &self.exclude)
+            .field("follow_gitignore", &self.follow_gitignore)
+            .field("include_hidden", &self.include_hidden)
+            .field("max_file_size", &self.max_file_size)
+            .field("threads", &self.threads)
+            .field("read_buffer_size", &self.read_buffer_size)
+            .field("progress", &self.progress)
+            .field("cancellation", &self.cancellation)
+            .finish()
+    }
+}
+
+#[derive(Clone)]
 pub struct ScanConfigBuilder {
     roots: Vec<PathBuf>,
     detection: DetectionConfig,
@@ -72,6 +103,8 @@ pub struct ScanConfigBuilder {
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
+    progress: Option<ProgressConfig>,
+    cancellation: Option<CancellationToken>,
 }
 
 impl ScanConfigBuilder {
@@ -88,6 +121,8 @@ impl ScanConfigBuilder {
             max_file_size: None,
             threads: None,
             read_buffer_size: 64 * 1024,
+            progress: None,
+            cancellation: None,
         }
     }
 
@@ -147,6 +182,24 @@ impl ScanConfigBuilder {
         self
     }
 
+    pub fn progress_reporter<R>(mut self, reporter: R) -> Self
+    where
+        R: ProgressReporter + 'static,
+    {
+        self.progress = Some(ProgressConfig::new(Arc::new(reporter)));
+        self
+    }
+
+    pub fn progress_reporter_arc(mut self, reporter: Arc<dyn ProgressReporter>) -> Self {
+        self.progress = Some(ProgressConfig::new(reporter));
+        self
+    }
+
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.cancellation = Some(token);
+        self
+    }
+
     pub fn build(self) -> ScanConfig {
         ScanConfig {
             roots: self.roots,
@@ -158,7 +211,27 @@ impl ScanConfigBuilder {
             max_file_size: self.max_file_size,
             threads: self.threads,
             read_buffer_size: self.read_buffer_size,
+            progress: self.progress,
+            cancellation: self.cancellation,
         }
+    }
+}
+
+impl std::fmt::Debug for ScanConfigBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ScanConfigBuilder")
+            .field("roots", &self.roots)
+            .field("detection", &self.detection)
+            .field("include", &self.include)
+            .field("exclude", &self.exclude)
+            .field("follow_gitignore", &self.follow_gitignore)
+            .field("include_hidden", &self.include_hidden)
+            .field("max_file_size", &self.max_file_size)
+            .field("threads", &self.threads)
+            .field("read_buffer_size", &self.read_buffer_size)
+            .field("progress", &self.progress)
+            .field("cancellation", &self.cancellation)
+            .finish()
     }
 }
 

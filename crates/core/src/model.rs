@@ -15,6 +15,7 @@ pub struct ScanStats {
     pub files_scanned: u64,
     pub files_skipped: u64,
     pub matches: u64,
+    pub cancelled: bool,
 }
 
 #[derive(Clone, Debug)]

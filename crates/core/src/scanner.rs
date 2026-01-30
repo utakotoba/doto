@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use ignore::overrides::OverrideBuilder;
@@ -9,6 +9,7 @@ use ignore::{WalkBuilder, WalkState};
 use regex::bytes::Regex;
 
 use crate::config::{DetectionConfig, ScanConfig};
+use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::error::ScanError;
 use crate::model::{Mark, ScanResult, ScanStats, ScanWarning};
 
@@ -43,29 +44,44 @@ impl Scanner {
         let files_scanned = Arc::new(AtomicU64::new(0));
         let files_skipped = Arc::new(AtomicU64::new(0));
         let matches = Arc::new(AtomicU64::new(0));
+        let cancelled = Arc::new(AtomicBool::new(false));
 
         let regex = Arc::clone(&self.regex);
         let config = self.config.clone();
+        let progress = self
+            .config
+            .progress()
+            .map(|progress| Arc::clone(progress.reporter()));
+        let cancellation = self.config.cancellation_token().cloned();
         let marks_ref = Arc::clone(&marks);
         let warnings_ref = Arc::clone(&warnings);
         let files_scanned_ref = Arc::clone(&files_scanned);
         let files_skipped_ref = Arc::clone(&files_skipped);
         let matches_ref = Arc::clone(&matches);
+        let cancelled_ref = Arc::clone(&cancelled);
 
         walker.run(move || {
             let regex = Arc::clone(&regex);
             let config = config.clone();
+            let progress = progress.clone();
+            let cancellation = cancellation.clone();
             let marks = Arc::clone(&marks_ref);
             let warnings = Arc::clone(&warnings_ref);
             let files_scanned = Arc::clone(&files_scanned_ref);
             let files_skipped = Arc::clone(&files_skipped_ref);
             let matches = Arc::clone(&matches_ref);
+            let cancelled = Arc::clone(&cancelled_ref);
 
             Box::new(move |entry| {
+                if is_cancelled(&cancellation) {
+                    mark_cancelled(&cancelled, &progress);
+                    return WalkState::Quit;
+                }
+
                 let entry = match entry {
                     Ok(entry) => entry,
                     Err(err) => {
-                        push_warning(&warnings, None, err.to_string());
+                        push_warning(&warnings, &progress, None, err.to_string());
                         files_skipped.fetch_add(1, Ordering::Relaxed);
                         return WalkState::Continue;
                     }
@@ -83,11 +99,18 @@ impl Scanner {
                 if let Some(max_file_size) = config.max_file_size() {
                     match entry.metadata() {
                         Ok(metadata) if metadata.len() > max_file_size => {
+                            report_file_skipped(&progress, path, SkipReason::MaxFileSize);
                             files_skipped.fetch_add(1, Ordering::Relaxed);
                             return WalkState::Continue;
                         }
                         Err(err) => {
-                            push_warning(&warnings, Some(path.to_path_buf()), err.to_string());
+                            push_warning(
+                                &warnings,
+                                &progress,
+                                Some(path.to_path_buf()),
+                                err.to_string(),
+                            );
+                            report_file_skipped(&progress, path, SkipReason::Metadata);
                             files_skipped.fetch_add(1, Ordering::Relaxed);
                             return WalkState::Continue;
                         }
@@ -96,16 +119,38 @@ impl Scanner {
                 }
 
                 let mut local_marks = Vec::new();
-                match scan_file(path, &regex, &config, &mut local_marks) {
-                    Ok(()) => {
+                match scan_file(
+                    path,
+                    &regex,
+                    &config,
+                    &progress,
+                    &cancellation,
+                    &mut local_marks,
+                ) {
+                    Ok(ScanOutcome::Completed) => {
                         files_scanned.fetch_add(1, Ordering::Relaxed);
+                        report_file_scanned(&progress, path);
                         if !local_marks.is_empty() {
                             matches.fetch_add(local_marks.len() as u64, Ordering::Relaxed);
                             push_marks(&marks, local_marks);
                         }
                     }
+                    Ok(ScanOutcome::Cancelled) => {
+                        if !local_marks.is_empty() {
+                            matches.fetch_add(local_marks.len() as u64, Ordering::Relaxed);
+                            push_marks(&marks, local_marks);
+                        }
+                        mark_cancelled(&cancelled, &progress);
+                        return WalkState::Quit;
+                    }
                     Err(err) => {
-                        push_warning(&warnings, Some(path.to_path_buf()), err.to_string());
+                        push_warning(
+                            &warnings,
+                            &progress,
+                            Some(path.to_path_buf()),
+                            err.to_string(),
+                        );
+                        report_file_skipped(&progress, path, SkipReason::Io);
                         files_skipped.fetch_add(1, Ordering::Relaxed);
                     }
                 }
@@ -124,6 +169,7 @@ impl Scanner {
             files_scanned: files_scanned.load(Ordering::Relaxed),
             files_skipped: files_skipped.load(Ordering::Relaxed),
             matches: matches.load(Ordering::Relaxed),
+            cancelled: cancelled.load(Ordering::Relaxed),
         };
 
         Ok(ScanResult {
@@ -184,8 +230,10 @@ fn scan_file(
     path: &Path,
     regex: &Regex,
     config: &ScanConfig,
+    progress: &Option<Arc<dyn ProgressReporter>>,
+    cancellation: &Option<CancellationToken>,
     output: &mut Vec<Mark>,
-) -> io::Result<()> {
+) -> io::Result<ScanOutcome> {
     let file = File::open(path)?;
     let mut reader = BufReader::with_capacity(config.read_buffer_size(), file);
     let mut buf = Vec::with_capacity(4096);
@@ -193,6 +241,9 @@ fn scan_file(
     let path = Arc::new(path.to_path_buf());
 
     loop {
+        if is_cancelled(cancellation) {
+            return Ok(ScanOutcome::Cancelled);
+        }
         buf.clear();
         let read = reader.read_until(b'\n', &mut buf)?;
         if read == 0 {
@@ -203,16 +254,20 @@ fn scan_file(
         for found in regex.find_iter(&buf) {
             let column = (found.start() + 1) as u32;
             let mark = String::from_utf8_lossy(&buf[found.start()..found.end()]).into_owned();
-            output.push(Mark {
+            let entry = Mark {
                 path: Arc::clone(&path),
                 line: line_no,
                 column,
                 mark,
-            });
+            };
+            if let Some(progress) = progress.as_deref() {
+                progress.on_match(&entry);
+            }
+            output.push(entry);
         }
     }
 
-    Ok(())
+    Ok(ScanOutcome::Completed)
 }
 
 fn push_marks(store: &Arc<Mutex<Vec<Mark>>>, mut marks: Vec<Mark>) {
@@ -223,7 +278,50 @@ fn push_marks(store: &Arc<Mutex<Vec<Mark>>>, mut marks: Vec<Mark>) {
     guard.append(&mut marks);
 }
 
-fn push_warning(store: &Arc<Mutex<Vec<ScanWarning>>>, path: Option<PathBuf>, message: String) {
+fn push_warning(
+    store: &Arc<Mutex<Vec<ScanWarning>>>,
+    progress: &Option<Arc<dyn ProgressReporter>>,
+    path: Option<PathBuf>,
+    message: String,
+) {
+    let warning = ScanWarning { path, message };
+    if let Some(progress) = progress.as_deref() {
+        progress.on_warning(&warning);
+    }
     let mut guard = store.lock().unwrap_or_else(|err| err.into_inner());
-    guard.push(ScanWarning { path, message });
+    guard.push(warning);
+}
+
+fn report_file_scanned(progress: &Option<Arc<dyn ProgressReporter>>, path: &Path) {
+    if let Some(progress) = progress.as_deref() {
+        progress.on_file_scanned(path);
+    }
+}
+
+fn report_file_skipped(
+    progress: &Option<Arc<dyn ProgressReporter>>,
+    path: &Path,
+    reason: SkipReason,
+) {
+    if let Some(progress) = progress.as_deref() {
+        progress.on_file_skipped(path, reason);
+    }
+}
+
+fn is_cancelled(cancel: &Option<CancellationToken>) -> bool {
+    cancel.as_ref().is_some_and(CancellationToken::is_cancelled)
+}
+
+fn mark_cancelled(flag: &AtomicBool, progress: &Option<Arc<dyn ProgressReporter>>) {
+    if !flag.swap(true, Ordering::Relaxed) {
+        if let Some(progress) = progress.as_deref() {
+            progress.on_cancelled();
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ScanOutcome {
+    Completed,
+    Cancelled,
 }
