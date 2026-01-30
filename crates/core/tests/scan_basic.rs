@@ -19,7 +19,7 @@ fn scan_default_regex_finds_marks() -> Result<(), Box<dyn Error>> {
     let mut marks = result
         .marks
         .iter()
-        .map(|mark| (mark.path.as_ref().clone(), mark.line, mark.mark.clone()))
+        .map(|mark| (mark.path.as_ref().clone(), mark.line, mark.mark))
         .collect::<Vec<_>>();
     marks.sort_by(|a, b| a.1.cmp(&b.1));
 

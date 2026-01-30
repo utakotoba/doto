@@ -26,7 +26,7 @@ fn main() {
     let mut marks = result
         .marks
         .iter()
-        .map(|mark| (mark.line, mark.mark.clone()))
+        .map(|mark| (mark.line, mark.mark))
         .collect::<Vec<_>>();
     marks.sort();
 
@@ -52,7 +52,7 @@ const note = `// TODO: not a comment`;
     let mut marks = result
         .marks
         .iter()
-        .map(|mark| (mark.line, mark.mark.clone()))
+        .map(|mark| (mark.line, mark.mark))
         .collect::<Vec<_>>();
     marks.sort();
 
