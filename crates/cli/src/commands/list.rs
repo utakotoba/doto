@@ -47,6 +47,12 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     let result = scan(builder.build())?;
     render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
 
+    if result.marks.is_empty() {
+        let mut stdout = io::BufWriter::new(io::stdout());
+        writeln!(stdout, "{}", "no marks found".green())?;
+        stdout.flush()?;
+    }
+
     if !warnings.is_empty() || !result.warnings.is_empty() {
         let mut stderr = io::BufWriter::new(io::stderr());
         writeln!(stderr)?;
