@@ -17,6 +17,7 @@ pub struct ScanConfig {
     exclude: Vec<String>,
     follow_gitignore: bool,
     include_hidden: bool,
+    builtin_excludes: bool,
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
@@ -53,6 +54,10 @@ impl ScanConfig {
         self.include_hidden
     }
 
+    pub fn builtin_excludes(&self) -> bool {
+        self.builtin_excludes
+    }
+
     pub fn max_file_size(&self) -> Option<u64> {
         self.max_file_size
     }
@@ -83,6 +88,7 @@ impl std::fmt::Debug for ScanConfig {
             .field("exclude", &self.exclude)
             .field("follow_gitignore", &self.follow_gitignore)
             .field("include_hidden", &self.include_hidden)
+            .field("builtin_excludes", &self.builtin_excludes)
             .field("max_file_size", &self.max_file_size)
             .field("threads", &self.threads)
             .field("read_buffer_size", &self.read_buffer_size)
@@ -100,6 +106,7 @@ pub struct ScanConfigBuilder {
     exclude: Vec<String>,
     follow_gitignore: bool,
     include_hidden: bool,
+    builtin_excludes: bool,
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
@@ -118,6 +125,7 @@ impl ScanConfigBuilder {
             exclude: Vec::new(),
             follow_gitignore: true,
             include_hidden: false,
+            builtin_excludes: true,
             max_file_size: None,
             threads: None,
             read_buffer_size: 64 * 1024,
@@ -167,6 +175,11 @@ impl ScanConfigBuilder {
         self
     }
 
+    pub fn builtin_excludes(mut self, yes: bool) -> Self {
+        self.builtin_excludes = yes;
+        self
+    }
+
     pub fn max_file_size(mut self, max_file_size: Option<u64>) -> Self {
         self.max_file_size = max_file_size;
         self
@@ -208,6 +221,7 @@ impl ScanConfigBuilder {
             exclude: self.exclude,
             follow_gitignore: self.follow_gitignore,
             include_hidden: self.include_hidden,
+            builtin_excludes: self.builtin_excludes,
             max_file_size: self.max_file_size,
             threads: self.threads,
             read_buffer_size: self.read_buffer_size,
@@ -226,6 +240,7 @@ impl std::fmt::Debug for ScanConfigBuilder {
             .field("exclude", &self.exclude)
             .field("follow_gitignore", &self.follow_gitignore)
             .field("include_hidden", &self.include_hidden)
+            .field("builtin_excludes", &self.builtin_excludes)
             .field("max_file_size", &self.max_file_size)
             .field("threads", &self.threads)
             .field("read_buffer_size", &self.read_buffer_size)

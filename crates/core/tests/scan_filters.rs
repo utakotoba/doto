@@ -10,7 +10,10 @@ fn scan_respects_hidden_files_default() -> Result<(), Box<dyn Error>> {
     let hidden_path = temp.path().join(".hidden.rs");
     fs::write(&hidden_path, "// TODO: hidden\n")?;
 
-    let config = ScanConfig::builder().root(temp.path()).build();
+    let config = ScanConfig::builder()
+        .root(temp.path())
+        .follow_gitignore(false)
+        .build();
     let result = scan(config)?;
 
     assert_eq!(result.stats.files_scanned, 0);
@@ -82,5 +85,29 @@ fn scan_respects_max_file_size() -> Result<(), Box<dyn Error>> {
     assert_eq!(result.stats.files_scanned, 0);
     assert_eq!(result.stats.files_skipped, 1);
     assert_eq!(result.stats.matches, 0);
+    Ok(())
+}
+
+#[test]
+fn scan_builtin_excludes_can_be_disabled() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let node_modules = temp.path().join("node_modules");
+    fs::create_dir_all(&node_modules)?;
+    let file_path = node_modules.join("dep.rs");
+    fs::write(&file_path, "// TODO: dep\n")?;
+
+    let config = ScanConfig::builder().root(temp.path()).build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.matches, 0);
+
+    let config = ScanConfig::builder()
+        .root(temp.path())
+        .follow_gitignore(false)
+        .builtin_excludes(false)
+        .build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.matches, 1);
     Ok(())
 }

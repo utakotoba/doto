@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use ignore::WalkBuilder;
 use ignore::overrides::OverrideBuilder;
 
+use crate::builtin::apply_builtin_excludes;
 use crate::config::ScanConfig;
 use crate::error::ScanError;
 
@@ -27,13 +28,16 @@ pub fn build_walk_builder(config: &ScanConfig) -> Result<WalkBuilder, ScanError>
         .require_git(false)
         .hidden(!config.include_hidden());
 
-    if !config.include().is_empty() || !config.exclude().is_empty() {
+    if config.builtin_excludes() || !config.include().is_empty() || !config.exclude().is_empty() {
         let override_base = config
             .roots()
             .first()
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."));
         let mut overrides = OverrideBuilder::new(override_base);
+        if config.builtin_excludes() {
+            apply_builtin_excludes(&mut overrides)?;
+        }
         for include in config.include() {
             overrides.add(include)?;
         }

@@ -3,6 +3,7 @@ mod config;
 mod control;
 mod error;
 mod model;
+mod builtin;
 mod scanner;
 
 pub use config::{DetectionConfig, ScanConfig, ScanConfigBuilder};
