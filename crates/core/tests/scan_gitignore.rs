@@ -7,13 +7,13 @@ use tempfile::TempDir;
 #[test]
 fn scan_respects_gitignore() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    fs::write(temp.path().join(".gitignore"), "ignored.txt\n")?;
+    fs::write(temp.path().join(".gitignore"), "ignored.rs\n")?;
 
-    let ignored = temp.path().join("ignored.txt");
-    let kept = temp.path().join("kept.txt");
+    let ignored = temp.path().join("ignored.rs");
+    let kept = temp.path().join("kept.rs");
 
-    fs::write(&ignored, "TODO ignored\n")?;
-    fs::write(&kept, "TODO kept\n")?;
+    fs::write(&ignored, "// TODO ignored\n")?;
+    fs::write(&kept, "// TODO kept\n")?;
 
     let config = ScanConfig::builder().root(temp.path()).build();
     let result = scan(config)?;
@@ -27,10 +27,10 @@ fn scan_respects_gitignore() -> Result<(), Box<dyn Error>> {
 #[test]
 fn scan_can_disable_gitignore() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    fs::write(temp.path().join(".gitignore"), "ignored.txt\n")?;
+    fs::write(temp.path().join(".gitignore"), "ignored.rs\n")?;
 
-    let ignored = temp.path().join("ignored.txt");
-    fs::write(&ignored, "TODO ignored\n")?;
+    let ignored = temp.path().join("ignored.rs");
+    fs::write(&ignored, "// TODO ignored\n")?;
 
     let config = ScanConfig::builder()
         .root(temp.path())

@@ -36,8 +36,8 @@ fn scan_default_regex_finds_marks() -> Result<(), Box<dyn Error>> {
 #[test]
 fn scan_custom_regex() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    let file_path = temp.path().join("notes.txt");
-    fs::write(&file_path, "NOTE: keep\nTODO: keep\n")?;
+    let file_path = temp.path().join("notes.rs");
+    fs::write(&file_path, "// NOTE: keep\n// TODO: keep\n")?;
 
     let config = ScanConfig::builder()
         .root(temp.path())

@@ -1,4 +1,5 @@
 mod control;
+mod comments;
 mod config;
 mod error;
 mod model;

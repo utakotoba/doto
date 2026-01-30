@@ -9,6 +9,7 @@ use ignore::{WalkBuilder, WalkState};
 use regex::bytes::Regex;
 
 use crate::config::{DetectionConfig, ScanConfig};
+use crate::comments::{find_comment_ranges, BlockState, CommentSyntax};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::error::ScanError;
 use crate::model::{Mark, ScanResult, ScanStats, ScanWarning};
@@ -234,11 +235,16 @@ fn scan_file(
     cancellation: &Option<CancellationToken>,
     output: &mut Vec<Mark>,
 ) -> io::Result<ScanOutcome> {
+    let Some(syntax) = CommentSyntax::for_path(path) else {
+        return Ok(ScanOutcome::Completed);
+    };
+
     let file = File::open(path)?;
     let mut reader = BufReader::with_capacity(config.read_buffer_size(), file);
     let mut buf = Vec::with_capacity(4096);
     let mut line_no: u32 = 0;
     let path = Arc::new(path.to_path_buf());
+    let mut block_state = BlockState::default();
 
     loop {
         if is_cancelled(cancellation) {
@@ -251,20 +257,24 @@ fn scan_file(
         }
         line_no = line_no.saturating_add(1);
 
-        for found in regex.find_iter(&buf) {
-            let column = (found.start() + 1) as u32;
-            let mark = String::from_utf8_lossy(&buf[found.start()..found.end()]).into_owned();
-            let entry = Mark {
-                path: Arc::clone(&path),
-                line: line_no,
-                column,
-                mark,
-            };
-            if let Some(progress) = progress.as_deref() {
-                progress.on_match(&entry);
+        find_comment_ranges(&buf, &mut block_state, syntax, |start, end| {
+            for found in regex.find_iter(&buf[start..end]) {
+                let column = (start + found.start() + 1) as u32;
+                let mark =
+                    String::from_utf8_lossy(&buf[start + found.start()..start + found.end()])
+                        .into_owned();
+                let entry = Mark {
+                    path: Arc::clone(&path),
+                    line: line_no,
+                    column,
+                    mark,
+                };
+                if let Some(progress) = progress.as_deref() {
+                    progress.on_match(&entry);
+                }
+                output.push(entry);
             }
-            output.push(entry);
-        }
+        });
     }
 
     Ok(ScanOutcome::Completed)
