@@ -18,7 +18,6 @@ impl Default for SortConfig {
             pipeline: vec![
                 SortStage::Mark(MarkSortConfig::default()),
                 SortStage::Language(LanguageSortConfig::default()),
-                SortStage::Folder(FolderSortConfig::default()),
             ],
         }
     }
