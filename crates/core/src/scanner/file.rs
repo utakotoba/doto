@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use regex::bytes::Regex;
 
-use crate::comments::{BlockState, find_comment_ranges, syntax_for_path};
+use crate::comments::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
 use crate::constants::normalize_mark_bytes;
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
@@ -51,14 +51,18 @@ pub fn scan_file(
 
         find_comment_ranges(&buf, &mut block_state, syntax.spec, |start, end| {
             for found in regex.find_iter(&buf[start..end]) {
-                let raw = &buf[start + found.start()..start + found.end()];
+                let match_start = start + found.start();
+                if !is_leading_mark(&buf, start, end, match_start, syntax.spec) {
+                    continue;
+                }
+                let raw = &buf[match_start..start + found.end()];
                 let Some(mark) = normalize_mark_bytes(raw) else {
                     continue;
                 };
                 let entry = Mark {
                     path: Arc::clone(&path),
                     line: line_no,
-                    column: (start + found.start() + 1) as u32,
+                    column: (match_start + 1) as u32,
                     mark,
                     language: syntax.language,
                 };
@@ -71,4 +75,60 @@ pub fn scan_file(
     }
 
     Ok(ScanOutcome::Completed)
+}
+
+fn is_leading_mark(
+    line: &[u8],
+    range_start: usize,
+    range_end: usize,
+    match_start: usize,
+    spec: &SyntaxSpec,
+) -> bool {
+    let mut pos = range_start;
+    let mut allow_block_marker = false;
+
+    if let Some(token) = spec.line_comment {
+        if starts_with(line, token, pos) {
+            pos += token.len();
+            if token.first() == Some(&b'/') {
+                while pos < range_end && (line[pos] == b'/' || line[pos] == b'!') {
+                    pos += 1;
+                }
+            } else if token.first() == Some(&b'#') {
+                if pos < range_end && line[pos] == b'!' {
+                    pos += 1;
+                }
+            }
+            pos = skip_ws(line, pos, range_end);
+            return match_start == pos;
+        }
+    }
+
+    if let Some((start, _)) = spec.block_comment {
+        if starts_with(line, start, pos) {
+            pos += start.len();
+            allow_block_marker = true;
+        } else if range_start == 0 {
+            allow_block_marker = true;
+        }
+    }
+
+    if allow_block_marker {
+        if pos < range_end && (line[pos] == b'*' || line[pos] == b'!') {
+            pos += 1;
+        }
+    }
+    pos = skip_ws(line, pos, range_end);
+    match_start == pos
+}
+
+fn skip_ws(line: &[u8], mut pos: usize, end: usize) -> usize {
+    while pos < end && line[pos].is_ascii_whitespace() {
+        pos += 1;
+    }
+    pos
+}
+
+fn starts_with(line: &[u8], needle: &[u8], idx: usize) -> bool {
+    idx + needle.len() <= line.len() && &line[idx..idx + needle.len()] == needle
 }
