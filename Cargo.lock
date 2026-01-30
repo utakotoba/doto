@@ -487,6 +487,7 @@ dependencies = [
 name = "koda-bench"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "colored",
  "koda-core",
  "rand",

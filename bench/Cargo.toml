@@ -12,3 +12,4 @@ koda-core = { path = "../crates/core" }
 rand.workspace = true
 tempfile.workspace = true
 colored.workspace = true
+clap.workspace = true

@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::cli::{MatrixArgs, RunArgs};
+
 #[derive(Clone, Debug)]
 pub struct RunOptions {
     pub roots: usize,
@@ -56,6 +58,39 @@ impl Default for MatrixOptions {
             mark_ratio: vec![0.02],
             seed: 42,
             out_dir: None,
+        }
+    }
+}
+
+impl From<RunArgs> for RunOptions {
+    fn from(args: RunArgs) -> Self {
+        Self {
+            roots: args.roots,
+            depth: args.depth,
+            dirs_per_level: args.dirs_per_level,
+            files_per_dir: args.files_per_dir,
+            min_lines: args.min_lines,
+            max_lines: args.max_lines,
+            mark_ratio: args.mark_ratio,
+            seed: args.seed,
+            out_dir: args.out,
+            scan: !args.no_scan,
+        }
+    }
+}
+
+impl From<MatrixArgs> for MatrixOptions {
+    fn from(args: MatrixArgs) -> Self {
+        Self {
+            roots: args.roots,
+            depth: args.depth,
+            dirs_per_level: args.dirs_per_level,
+            files_per_dir: args.files_per_dir,
+            min_lines: args.min_lines,
+            max_lines: args.max_lines,
+            mark_ratio: args.mark_ratio,
+            seed: args.seed,
+            out_dir: args.out,
         }
     }
 }

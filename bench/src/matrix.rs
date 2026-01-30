@@ -1,7 +1,7 @@
 use colored::Colorize;
 
 use crate::options::{MatrixOptions, RunOptions};
-use crate::runner::{format_out_dir, run_once, run_summary};
+use crate::runner::{format_out_dir, label_for_run, run_once, run_summary};
 
 pub fn run_matrix(options: MatrixOptions) -> Result<(), Box<dyn std::error::Error>> {
     let mut count = 0usize;
@@ -11,18 +11,6 @@ pub fn run_matrix(options: MatrixOptions) -> Result<(), Box<dyn std::error::Erro
                 for files in &options.files_per_dir {
                     for ratio in &options.mark_ratio {
                         count += 1;
-                        let label = format!(
-                            "roots{}_depth{}_dirs{}_files{}_ratio{}",
-                            roots,
-                            depth,
-                            dirs,
-                            files,
-                            ratio
-                        );
-                        let out_dir = options
-                            .out_dir
-                            .as_ref()
-                            .map(|base| format_out_dir(base, &label));
                         let run = RunOptions {
                             roots: *roots,
                             depth: *depth,
@@ -32,8 +20,16 @@ pub fn run_matrix(options: MatrixOptions) -> Result<(), Box<dyn std::error::Erro
                             max_lines: options.max_lines,
                             mark_ratio: *ratio,
                             seed: options.seed,
-                            out_dir,
+                            out_dir: None,
                             scan: true,
+                        };
+                        let label = label_for_run(&run);
+                        let run = RunOptions {
+                            out_dir: options
+                                .out_dir
+                                .as_ref()
+                                .map(|base| format_out_dir(base, &label)),
+                            ..run
                         };
                         let summary = run_once(run)?;
                         run_summary(&label, &summary);

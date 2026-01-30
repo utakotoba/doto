@@ -66,6 +66,17 @@ pub fn run_once(options: RunOptions) -> Result<RunSummary, Box<dyn std::error::E
     })
 }
 
+pub fn label_for_run(options: &RunOptions) -> String {
+    format!(
+        "roots={} depth={} dirs={} files={} ratio={}",
+        options.roots,
+        options.depth,
+        options.dirs_per_level,
+        options.files_per_dir,
+        options.mark_ratio
+    )
+}
+
 pub fn run_summary(label: &str, summary: &RunSummary) {
     let mb = summary.bytes as f64 / (1024.0 * 1024.0);
     let throughput = if summary.elapsed_secs > 0.0 {
