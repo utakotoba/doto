@@ -14,3 +14,4 @@ config.workspace = true
 dotenvy.workspace = true
 serde.workspace = true
 colored.workspace = true
+indicatif.workspace = true

@@ -6,6 +6,7 @@ use colored::Colorize;
 
 use crate::commands::renderer::render_list;
 use crate::config::Config;
+use crate::progress::DeferredProgress;
 
 pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Error>> {
     let roots = if config.roots.is_empty() {
@@ -15,6 +16,9 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     };
 
     let mut builder = ScanConfig::builder().roots(roots.clone());
+    let progress = DeferredProgress::new();
+    let reporter = progress.clone();
+    builder = builder.progress_reporter_arc(reporter);
 
     if let Some(regex) = config.regex {
         builder = builder.regex(regex);
@@ -44,7 +48,9 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         builder = builder.sort_config(sort_config.clone());
     }
 
+    progress.clone().start_if_slow(std::time::Duration::from_millis(1500));
     let result = scan(builder.build())?;
+    progress.finish();
     render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
 
     if result.marks.is_empty() {
@@ -61,10 +67,11 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         }
         for warning in result.warnings {
             if let Some(path) = warning.path {
+                let path_display = path.display();
                 writeln!(
                     stderr,
                     "{}",
-                    format!("warning: {}: {}", path.display(), warning.message).yellow()
+                    format!("warning: {}: {}", path_display, warning.message).yellow()
                 )?;
             } else {
                 writeln!(
