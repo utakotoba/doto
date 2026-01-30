@@ -337,6 +337,26 @@ fn find_ranges(
 ) {
     let len = line.len();
     let mut cursor = 0;
+    let mut interesting = [false; 256];
+
+    for delim in spec.strings {
+        if let Some(&first) = delim.token.first() {
+            interesting[first as usize] = true;
+        }
+    }
+    if let Some(token) = spec.line_comment {
+        if let Some(&first) = token.first() {
+            interesting[first as usize] = true;
+        }
+    }
+    if let Some((start, _)) = spec.block_comment {
+        if let Some(&first) = start.first() {
+            interesting[first as usize] = true;
+        }
+    }
+    if spec.raw_string {
+        interesting[b'r' as usize] = true;
+    }
 
     if state.in_block {
         let Some((_, end_token)) = spec.block_comment else {
@@ -387,6 +407,11 @@ fn find_ranges(
                 continue;
             }
             return;
+        }
+
+        if !interesting[line[idx] as usize] {
+            idx += 1;
+            continue;
         }
 
         if spec.raw_string {
