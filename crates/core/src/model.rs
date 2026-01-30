@@ -8,6 +8,7 @@ pub struct Mark {
     pub line: u32,
     pub column: u32,
     pub mark: String,
+    pub language: &'static str,
 }
 
 #[derive(Clone, Debug, Default)]

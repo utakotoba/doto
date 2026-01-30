@@ -19,6 +19,7 @@ use crate::scanner::report::{
 };
 use crate::scanner::stats::ScanCounters;
 use crate::scanner::walk::build_walk_builder;
+use crate::sort::apply_sort_pipeline;
 
 pub struct Scanner {
     config: ScanConfig,
@@ -186,8 +187,10 @@ impl Scanner {
             cancelled: counters.cancelled.load(Ordering::Relaxed),
         };
 
+        let sorted_marks = apply_sort_pipeline(output.marks, config.sort_config(), config.roots());
+
         Ok(ScanResult {
-            marks: output.marks,
+            marks: sorted_marks,
             stats,
             warnings: output.warnings,
         })

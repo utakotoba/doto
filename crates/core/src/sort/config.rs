@@ -1,0 +1,135 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SortConfig {
+    pub pipeline: Vec<SortStage>,
+}
+
+impl SortConfig {
+    pub fn with_pipeline(pipeline: Vec<SortStage>) -> Self {
+        Self { pipeline }
+    }
+}
+
+impl Default for SortConfig {
+    fn default() -> Self {
+        Self {
+            pipeline: vec![
+                SortStage::Mark(MarkSortConfig::default()),
+                SortStage::Language(LanguageSortConfig::default()),
+                SortStage::Path(PathSortConfig::default()),
+            ],
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum SortStage {
+    Mark(MarkSortConfig),
+    Language(LanguageSortConfig),
+    Path(PathSortConfig),
+    Filename(FilenameSortConfig),
+    Folder(FolderSortConfig),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MarkSortConfig {
+    pub overrides: Vec<MarkPriorityOverride>,
+}
+
+impl Default for MarkSortConfig {
+    fn default() -> Self {
+        Self {
+            overrides: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LanguageSortConfig {
+    pub order: LanguageOrder,
+}
+
+impl Default for LanguageSortConfig {
+    fn default() -> Self {
+        Self {
+            order: LanguageOrder::CountDescNameAsc,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LanguageOrder {
+    CountDescNameAsc,
+    NameAsc,
+}
+
+impl Default for LanguageOrder {
+    fn default() -> Self {
+        Self::CountDescNameAsc
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PathSortConfig {
+    pub order: Order,
+}
+
+impl Default for PathSortConfig {
+    fn default() -> Self {
+        Self { order: Order::Asc }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FilenameSortConfig {
+    pub order: Order,
+}
+
+impl Default for FilenameSortConfig {
+    fn default() -> Self {
+        Self { order: Order::Asc }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FolderSortConfig {
+    pub depth: usize,
+    pub order: Order,
+}
+
+impl Default for FolderSortConfig {
+    fn default() -> Self {
+        Self {
+            depth: 1,
+            order: Order::Asc,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Order {
+    Asc,
+    Desc,
+}
+
+impl Default for Order {
+    fn default() -> Self {
+        Self::Asc
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MarkPriorityOverride {
+    pub mark: String,
+    pub priority: u8,
+}

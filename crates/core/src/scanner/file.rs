@@ -8,6 +8,7 @@ use regex::bytes::Regex;
 use crate::comments::{BlockState, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
+use crate::constants::normalize_mark;
 use crate::model::Mark;
 use crate::scanner::report::is_cancelled;
 
@@ -48,24 +49,28 @@ pub fn scan_file(
         }
         line_no = line_no.saturating_add(1);
 
-        find_comment_ranges(&buf, &mut block_state, syntax, |start, end| {
-            for found in regex.find_iter(&buf[start..end]) {
-                let column = (start + found.start() + 1) as u32;
-                let mark =
-                    String::from_utf8_lossy(&buf[start + found.start()..start + found.end()])
-                        .into_owned();
-                let entry = Mark {
-                    path: Arc::clone(&path),
-                    line: line_no,
-                    column,
-                    mark,
-                };
-                if let Some(progress) = progress.as_deref() {
-                    progress.on_match(&entry);
-                }
-                output.push(entry);
+    find_comment_ranges(&buf, &mut block_state, syntax.spec, |start, end| {
+        for found in regex.find_iter(&buf[start..end]) {
+            let raw = &buf[start + found.start()..start + found.end()];
+            let Ok(raw_str) = std::str::from_utf8(raw) else {
+                continue;
+            };
+            let Some(mark) = normalize_mark(raw_str) else {
+                continue;
+            };
+            let entry = Mark {
+                path: Arc::clone(&path),
+                line: line_no,
+                column: (start + found.start() + 1) as u32,
+                mark: mark.to_string(),
+                language: syntax.language,
+            };
+            if let Some(progress) = progress.as_deref() {
+                progress.on_match(&entry);
             }
-        });
+            output.push(entry);
+        }
+    });
     }
 
     Ok(ScanOutcome::Completed)

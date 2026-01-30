@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::control::{CancellationToken, ProgressConfig, ProgressReporter};
+use crate::sort::{SortConfig, SortStage};
+use crate::constants::DEFAULT_MARK_REGEX;
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]
@@ -18,6 +20,7 @@ pub struct ScanConfig {
     follow_gitignore: bool,
     include_hidden: bool,
     builtin_excludes: bool,
+    sort_config: SortConfig,
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
@@ -58,6 +61,10 @@ impl ScanConfig {
         self.builtin_excludes
     }
 
+    pub fn sort_config(&self) -> &SortConfig {
+        &self.sort_config
+    }
+
     pub fn max_file_size(&self) -> Option<u64> {
         self.max_file_size
     }
@@ -89,6 +96,7 @@ impl std::fmt::Debug for ScanConfig {
             .field("follow_gitignore", &self.follow_gitignore)
             .field("include_hidden", &self.include_hidden)
             .field("builtin_excludes", &self.builtin_excludes)
+            .field("sort_config", &self.sort_config)
             .field("max_file_size", &self.max_file_size)
             .field("threads", &self.threads)
             .field("read_buffer_size", &self.read_buffer_size)
@@ -107,6 +115,7 @@ pub struct ScanConfigBuilder {
     follow_gitignore: bool,
     include_hidden: bool,
     builtin_excludes: bool,
+    sort_config: SortConfig,
     max_file_size: Option<u64>,
     threads: Option<usize>,
     read_buffer_size: usize,
@@ -126,6 +135,7 @@ impl ScanConfigBuilder {
             follow_gitignore: true,
             include_hidden: false,
             builtin_excludes: true,
+            sort_config: SortConfig::default(),
             max_file_size: None,
             threads: None,
             read_buffer_size: 64 * 1024,
@@ -180,6 +190,16 @@ impl ScanConfigBuilder {
         self
     }
 
+    pub fn sort_config(mut self, sort_config: SortConfig) -> Self {
+        self.sort_config = sort_config;
+        self
+    }
+
+    pub fn sort_pipeline(mut self, pipeline: Vec<SortStage>) -> Self {
+        self.sort_config = SortConfig::with_pipeline(pipeline);
+        self
+    }
+
     pub fn max_file_size(mut self, max_file_size: Option<u64>) -> Self {
         self.max_file_size = max_file_size;
         self
@@ -222,6 +242,7 @@ impl ScanConfigBuilder {
             follow_gitignore: self.follow_gitignore,
             include_hidden: self.include_hidden,
             builtin_excludes: self.builtin_excludes,
+            sort_config: self.sort_config,
             max_file_size: self.max_file_size,
             threads: self.threads,
             read_buffer_size: self.read_buffer_size,
@@ -241,6 +262,7 @@ impl std::fmt::Debug for ScanConfigBuilder {
             .field("follow_gitignore", &self.follow_gitignore)
             .field("include_hidden", &self.include_hidden)
             .field("builtin_excludes", &self.builtin_excludes)
+            .field("sort_config", &self.sort_config)
             .field("max_file_size", &self.max_file_size)
             .field("threads", &self.threads)
             .field("read_buffer_size", &self.read_buffer_size)
@@ -257,5 +279,5 @@ impl Default for ScanConfigBuilder {
 }
 
 fn default_pattern() -> &'static str {
-    r"(?i)\b(?:TODO|FIXME|HACK|NOTE|BUG|XXX)\b"
+    DEFAULT_MARK_REGEX
 }

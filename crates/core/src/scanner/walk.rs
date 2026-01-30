@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use ignore::WalkBuilder;
 use ignore::overrides::OverrideBuilder;
 
-use crate::builtin::apply_builtin_excludes;
+use crate::constants::apply_builtin_excludes;
 use crate::config::ScanConfig;
 use crate::error::ScanError;
 

@@ -14,6 +14,12 @@ pub struct SyntaxSpec {
     pub strings: &'static [StringDelim],
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct SyntaxInfo {
+    pub spec: &'static SyntaxSpec,
+    pub language: &'static str,
+}
+
 const C_STYLE_STRINGS: &[StringDelim] = &[
     StringDelim {
         token: b"\"",
@@ -159,7 +165,7 @@ const LUA: SyntaxSpec = SyntaxSpec {
     strings: HASH_STRINGS,
 };
 
-pub fn syntax_for_path(path: &Path) -> Option<&'static SyntaxSpec> {
+pub fn syntax_for_path(path: &Path) -> Option<SyntaxInfo> {
     let ext = path
         .extension()
         .map(|ext| ext.to_string_lossy().to_ascii_lowercase());
@@ -167,21 +173,101 @@ pub fn syntax_for_path(path: &Path) -> Option<&'static SyntaxSpec> {
         .file_name()
         .map(|name| name.to_string_lossy().to_ascii_lowercase());
     if let Some(name) = name.as_deref() {
-        if name == "makefile" || name == "dockerfile" {
-            return Some(&HASH_SIMPLE);
+        if name == "makefile" {
+            return Some(SyntaxInfo {
+                spec: &HASH_SIMPLE,
+                language: "makefile",
+            });
+        }
+        if name == "dockerfile" {
+            return Some(SyntaxInfo {
+                spec: &HASH_SIMPLE,
+                language: "dockerfile",
+            });
         }
     }
     let ext = ext.as_deref()?;
     match ext {
-        "rs" | "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" | "java" | "kt"
-        | "kts" | "swift" | "go" | "cs" | "scala" | "dart" => Some(&C_STYLE),
-        "js" | "jsx" | "ts" | "tsx" => Some(&C_STYLE_JS),
-        "py" => Some(&HASH_PY),
-        "sh" | "bash" | "zsh" => Some(&HASH_SHELL),
-        "toml" => Some(&HASH_TOML),
-        "rb" | "yml" | "yaml" | "ini" | "cfg" | "conf" | "env" => Some(&HASH_SIMPLE),
-        "lua" => Some(&LUA),
-        "mk" => Some(&HASH_SIMPLE),
+        "rs" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "rs",
+        }),
+        "c" | "h" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "c",
+        }),
+        "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "cpp",
+        }),
+        "java" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "java",
+        }),
+        "kt" | "kts" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "kotlin",
+        }),
+        "swift" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "swift",
+        }),
+        "go" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "go",
+        }),
+        "cs" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "cs",
+        }),
+        "scala" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "scala",
+        }),
+        "dart" => Some(SyntaxInfo {
+            spec: &C_STYLE,
+            language: "dart",
+        }),
+        "js" | "jsx" => Some(SyntaxInfo {
+            spec: &C_STYLE_JS,
+            language: "js",
+        }),
+        "ts" | "tsx" => Some(SyntaxInfo {
+            spec: &C_STYLE_JS,
+            language: "ts",
+        }),
+        "py" => Some(SyntaxInfo {
+            spec: &HASH_PY,
+            language: "py",
+        }),
+        "sh" | "bash" | "zsh" => Some(SyntaxInfo {
+            spec: &HASH_SHELL,
+            language: "sh",
+        }),
+        "toml" => Some(SyntaxInfo {
+            spec: &HASH_TOML,
+            language: "toml",
+        }),
+        "rb" => Some(SyntaxInfo {
+            spec: &HASH_SIMPLE,
+            language: "rb",
+        }),
+        "yml" | "yaml" => Some(SyntaxInfo {
+            spec: &HASH_SIMPLE,
+            language: "yaml",
+        }),
+        "ini" | "cfg" | "conf" | "env" => Some(SyntaxInfo {
+            spec: &HASH_SIMPLE,
+            language: "ini",
+        }),
+        "lua" => Some(SyntaxInfo {
+            spec: &LUA,
+            language: "lua",
+        }),
+        "mk" => Some(SyntaxInfo {
+            spec: &HASH_SIMPLE,
+            language: "make",
+        }),
         _ => None,
     }
 }
