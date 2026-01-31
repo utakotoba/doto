@@ -73,6 +73,8 @@ doto --sort folder --sort-folder-depth 2 --sort-folder-order desc
 
 On a Chromium-sized repo (~7M SLOC), scanning completes in ~3s with ~55MB peak memory on a modern laptop.
 
+> We are going to add detailed benchmark here...
+
 ### License
 
 Copyright © 2026 Ly (Ling Yu). Licensed under the MIT.
