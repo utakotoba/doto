@@ -17,14 +17,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     let Cli {
         ref config,
-        config_format,
-        ref dotenv,
         no_dotenv,
         ..
     } = cli;
 
-    let config =
-        load_config_with_context(no_dotenv, dotenv.as_ref(), config.as_ref(), config_format)?;
+    let config = load_config_with_context(no_dotenv, config.as_ref())?;
 
     let mut config = config;
     apply_args(&mut config, &cli);

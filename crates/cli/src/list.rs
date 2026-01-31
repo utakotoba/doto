@@ -36,12 +36,6 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     if let Some(hidden) = config.hidden {
         builder = builder.include_hidden(hidden);
     }
-    if let Some(max_file_size) = config.max_file_size {
-        builder = builder.max_file_size(Some(max_file_size));
-    }
-    if let Some(threads) = config.threads {
-        builder = builder.threads(Some(threads));
-    }
     if let Some(read_buffer_size) = config.read_buffer_size {
         builder = builder.read_buffer_size(read_buffer_size);
     }

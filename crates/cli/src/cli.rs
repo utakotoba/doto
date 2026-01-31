@@ -13,14 +13,6 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub config: Option<PathBuf>,
 
-    /// Config format override
-    #[arg(long, value_enum, global = true)]
-    pub config_format: Option<ConfigFormat>,
-
-    /// Optional .env path (defaults to searching for .env)
-    #[arg(long, global = true)]
-    pub dotenv: Option<PathBuf>,
-
     /// Skip loading .env entirely
     #[arg(long, global = true)]
     pub no_dotenv: bool,
@@ -48,14 +40,6 @@ pub struct Cli {
     /// Whether to include hidden files (true/false)
     #[arg(long)]
     pub hidden: Option<bool>,
-
-    /// Skip files larger than this size in bytes
-    #[arg(long)]
-    pub max_file_size: Option<u64>,
-
-    /// Number of traversal threads
-    #[arg(long)]
-    pub threads: Option<usize>,
 
     /// Read buffer size in bytes
     #[arg(long)]
@@ -123,13 +107,6 @@ pub struct Cli {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-pub enum ConfigFormat {
-    Toml,
-    Json,
-    Yaml,
-}
-
-#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum SortOrderArg {
     Asc,
     Desc,
@@ -139,14 +116,4 @@ pub enum SortOrderArg {
 pub enum SortLangOrderArg {
     Count,
     Name,
-}
-
-impl ConfigFormat {
-    pub fn to_file_format(self) -> config::FileFormat {
-        match self {
-            ConfigFormat::Toml => config::FileFormat::Toml,
-            ConfigFormat::Json => config::FileFormat::Json,
-            ConfigFormat::Yaml => config::FileFormat::Yaml,
-        }
-    }
 }

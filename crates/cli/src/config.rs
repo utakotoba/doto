@@ -11,7 +11,7 @@ use doto_core::{
     ValuePredicate,
 };
 
-use crate::cli::{Cli, ConfigFormat, SortLangOrderArg, SortOrderArg};
+use crate::cli::{Cli, SortLangOrderArg, SortOrderArg};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -22,18 +22,13 @@ pub struct Config {
     pub exclude: Vec<String>,
     pub gitignore: Option<bool>,
     pub hidden: Option<bool>,
-    pub max_file_size: Option<u64>,
-    pub threads: Option<usize>,
     pub read_buffer_size: Option<usize>,
     pub sort: Option<SortConfig>,
     pub filter: Option<FilterConfig>,
     pub file_header: bool,
 }
 
-pub fn load_config(
-    config_path: Option<&PathBuf>,
-    config_format: Option<ConfigFormat>,
-) -> Result<Config, ConfigError> {
+pub fn load_config(config_path: Option<&PathBuf>) -> Result<Config, ConfigError> {
     let mut builder = ConfigSource::builder()
         .set_default("gitignore", true)?
         .set_default("hidden", false)?
@@ -41,13 +36,7 @@ pub fn load_config(
         .set_default("file_header", true)?;
 
     if let Some(path) = config_path {
-        builder = match config_format {
-            Some(format) => builder.add_source(File::new(
-                path.to_string_lossy().as_ref(),
-                format.to_file_format(),
-            )),
-            None => builder.add_source(File::from(path.clone())),
-        };
+        builder = builder.add_source(File::from(path.clone()));
     }
 
     builder = builder.add_source(
@@ -65,12 +54,10 @@ pub fn load_config(
 
 pub fn load_config_with_context(
     no_dotenv: bool,
-    dotenv: Option<&PathBuf>,
     config_path: Option<&PathBuf>,
-    config_format: Option<ConfigFormat>,
 ) -> Result<Config, Box<dyn Error>> {
-    load_dotenv(no_dotenv, dotenv)?;
-    let config = load_config(config_path, config_format)?;
+    load_dotenv(no_dotenv)?;
+    let config = load_config(config_path)?;
     Ok(config)
 }
 
@@ -92,12 +79,6 @@ pub fn apply_args(config: &mut Config, args: &Cli) {
     }
     if let Some(hidden) = args.hidden {
         config.hidden = Some(hidden);
-    }
-    if let Some(max_file_size) = args.max_file_size {
-        config.max_file_size = Some(max_file_size);
-    }
-    if let Some(threads) = args.threads {
-        config.threads = Some(threads);
     }
     if let Some(read_buffer_size) = args.read_buffer_size {
         config.read_buffer_size = Some(read_buffer_size);
@@ -277,15 +258,11 @@ pub fn resolve_filter_config(
     }
 }
 
-fn load_dotenv(no_dotenv: bool, dotenv: Option<&PathBuf>) -> Result<(), Box<dyn Error>> {
+fn load_dotenv(no_dotenv: bool) -> Result<(), Box<dyn Error>> {
     if no_dotenv {
         return Ok(());
     }
-    if let Some(path) = dotenv {
-        dotenvy::from_path(path)?;
-    } else {
-        let _ = dotenvy::dotenv();
-    }
+    let _ = dotenvy::dotenv();
     Ok(())
 }
 
