@@ -15,7 +15,7 @@ Track, filter, and navigate code comment anchors like TODO, NOTE and FIXME direc
 
 ### Install
 
-Currently, we are only support to install by cargo.
+Currently, we only support to install by cargo. Add Homebrew in the near future (via Tap).
 
 ```sh
 cargo install doto --locked
