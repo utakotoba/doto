@@ -1,3 +1,5 @@
+![doto_header](https://github.com/user-attachments/assets/83006b00-bb4c-4ba4-93cf-867b9fe99d45)
+
 ### doto &middot; comment mark tracker
 
 Track, filter, and navigate code comment anchors like TODO, NOTE and FIXME directly from your terminal.
