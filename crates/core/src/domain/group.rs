@@ -1,5 +1,5 @@
 use crate::domain::Mark;
-use crate::domain::DimensionValue;
+use crate::dimension::DimensionValue;
 
 #[derive(Clone, Debug)]
 pub struct GroupTree {

@@ -1,13 +1,12 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::constants::{DEFAULT_MARK_PRIORITIES, normalize_mark};
-use crate::domain::Mark;
-use crate::sort::config::{
-    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
-    MarkSortConfig, Order, PathSortConfig,
+use crate::dimension::{
+    DimensionStage, DimensionValue, FolderSortConfig, LanguageOrder, LanguageSortConfig,
+    MarkPriorityOverride, MarkSortConfig, Order, PathSortConfig, folder_key,
 };
-use crate::domain::DimensionValue;
+use crate::domain::Mark;
 use crate::sort::group::Group;
 
 pub(crate) fn group_for_stage(
@@ -42,9 +41,11 @@ fn group_by_mark(items: Vec<Mark>, config: &MarkSortConfig) -> Vec<Group> {
         let (DimensionValue::Mark(a_key), DimensionValue::Mark(b_key)) = (&a.key, &b.key) else {
             return std::cmp::Ordering::Equal;
         };
-        let a_prio = mark_priority(a_key, &config.overrides).unwrap_or(u8::MAX);
-        let b_prio = mark_priority(b_key, &config.overrides).unwrap_or(u8::MAX);
-        a_prio.cmp(&b_prio).then_with(|| a_key.cmp(b_key))
+        let a_prio = mark_priority(a_key.as_ref(), &config.overrides).unwrap_or(u8::MAX);
+        let b_prio = mark_priority(b_key.as_ref(), &config.overrides).unwrap_or(u8::MAX);
+        a_prio
+            .cmp(&b_prio)
+            .then_with(|| a_key.as_ref().cmp(b_key.as_ref()))
     });
     groups
 }
@@ -73,7 +74,7 @@ fn group_by_language(items: Vec<Mark>, config: &LanguageSortConfig) -> Vec<Group
                 b.items
                     .len()
                     .cmp(&a.items.len())
-                    .then_with(|| a_key.cmp(b_key))
+                    .then_with(|| a_key.as_ref().cmp(b_key.as_ref()))
             });
         }
         LanguageOrder::NameAsc => {
@@ -83,7 +84,7 @@ fn group_by_language(items: Vec<Mark>, config: &LanguageSortConfig) -> Vec<Group
                 else {
                     return std::cmp::Ordering::Equal;
                 };
-                a_key.cmp(b_key)
+                a_key.as_ref().cmp(b_key.as_ref())
             });
         }
     }
@@ -141,34 +142,6 @@ fn group_by_folder(items: Vec<Mark>, config: &FolderSortConfig, roots: &[PathBuf
     groups
 }
 
-fn folder_key(path: &Path, roots: &[PathBuf], depth: usize) -> PathBuf {
-    if depth == 0 {
-        return PathBuf::new();
-    }
-
-    if let Some(root) = roots.iter().find(|root| path.starts_with(root)) {
-        if let Ok(rel) = path.strip_prefix(root) {
-            if let Some(parent) = rel.parent() {
-                return prefix_components(parent, depth);
-            }
-        }
-    }
-
-    if let Some(parent) = path.parent() {
-        return prefix_components(parent, depth);
-    }
-
-    PathBuf::new()
-}
-
-fn prefix_components(path: &Path, depth: usize) -> PathBuf {
-    let mut key = PathBuf::new();
-    for component in path.components().take(depth) {
-        key.push(component.as_os_str());
-    }
-    key
-}
-
 fn mark_priority(mark: &str, overrides: &[MarkPriorityOverride]) -> Option<u8> {
     for override_entry in overrides {
         if override_entry.mark.eq_ignore_ascii_case(mark) {
@@ -181,21 +154,4 @@ fn mark_priority(mark: &str, overrides: &[MarkPriorityOverride]) -> Option<u8> {
         }
     }
     None
-}
-
-pub(crate) fn extract_dimension_value(
-    stage: &DimensionStage,
-    mark: &Mark,
-    roots: &[PathBuf],
-) -> Option<DimensionValue> {
-    match stage {
-        DimensionStage::Mark(_) => normalize_mark(mark.mark)
-            .map(|kind| DimensionValue::Mark(kind.into())),
-        DimensionStage::Language(_) => Some(DimensionValue::Language(mark.language.into())),
-        DimensionStage::Path(_) => Some(DimensionValue::Path((*mark.path).clone())),
-        DimensionStage::Folder(config) => {
-            let key = folder_key(mark.path.as_ref(), roots, config.depth);
-            Some(DimensionValue::Folder(key))
-        }
-    }
 }

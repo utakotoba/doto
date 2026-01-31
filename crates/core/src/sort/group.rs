@@ -1,4 +1,5 @@
-use crate::domain::{DimensionValue, Mark};
+use crate::dimension::DimensionValue;
+use crate::domain::Mark;
 
 #[derive(Debug)]
 pub(crate) struct Group {

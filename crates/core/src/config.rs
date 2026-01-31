@@ -4,7 +4,8 @@ use std::sync::Arc;
 use crate::constants::DEFAULT_MARK_REGEX;
 use crate::control::{CancellationToken, ProgressConfig, ProgressReporter};
 use crate::filter::FilterConfig;
-use crate::sort::{DimensionStage, SortConfig};
+use crate::dimension::DimensionStage;
+use crate::sort::SortConfig;
 
 #[non_exhaustive]
 #[derive(Clone, Debug)]
