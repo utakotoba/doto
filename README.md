@@ -26,19 +26,47 @@ cargo install doto --locked
 Scan the current directory:
 
 ```sh
+# Scan the current directory.
 doto
 ```
 
 Scan specific paths:
 
 ```sh
+# Scan only the specified paths.
 doto crates/cli crates/core
 ```
 
 Limit to specific marks or languages:
 
 ```sh
+# Filter to specific marks and languages.
 doto --filter-mark TODO --filter-mark FIXME --filter-language rs
+```
+
+### Sorting pipeline
+
+Sort and group via a pipeline of stages. Stages are: `mark`, `language`, `path`, `folder`.
+
+```sh
+# Group by mark, then language, then folder.
+doto --sort mark,language,folder
+```
+
+Stage overrides only apply when that stage exists in the pipeline:
+
+```sh
+# Override mark priority inside the mark stage.
+doto --sort mark --sort-mark-priority "FIXME=0,TODO=1"
+
+# Change language grouping order.
+doto --sort language --sort-lang-order name
+
+# Path grouping order.
+doto --sort path --sort-path-order desc
+
+# Folder grouping: depth relative to scan root, and order.
+doto --sort folder --sort-folder-depth 2 --sort-folder-order desc
 ```
 
 ### Performance Notes
