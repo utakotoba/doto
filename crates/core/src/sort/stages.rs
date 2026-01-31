@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::constants::{DEFAULT_MARK_PRIORITIES, normalize_mark};
-use crate::dimension::{
-    DimensionStage, DimensionValue, FolderSortConfig, LanguageOrder, LanguageSortConfig,
-    MarkPriorityOverride, MarkSortConfig, Order, PathSortConfig, folder_key,
+use crate::utils::folder_key;
+use crate::model::{DimensionValue, Mark};
+use crate::sort::config::{
+    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
+    MarkSortConfig, Order, PathSortConfig,
 };
-use crate::domain::Mark;
 use crate::sort::group::Group;
 
 pub(crate) fn group_for_stage(
@@ -119,7 +120,7 @@ fn group_by_path(items: Vec<Mark>, config: &PathSortConfig) -> Vec<Group> {
 fn group_by_folder(items: Vec<Mark>, config: &FolderSortConfig, roots: &[PathBuf]) -> Vec<Group> {
     let mut map: HashMap<PathBuf, Vec<Mark>> = HashMap::new();
     for mark in items {
-        let key = folder_key(mark.path.as_ref(), roots, config.depth);
+        let key = folder_key(mark.path.as_ref(), roots, config);
         map.entry(key).or_default().push(mark);
     }
     let mut groups = map

@@ -12,7 +12,7 @@ use regex::bytes::Regex;
 use crate::config::{DetectionConfig, ScanConfig};
 use crate::control::SkipReason;
 use crate::error::ScanError;
-use crate::domain::{GroupedScanResult, Mark, ScanResult, ScanStats, ScanWarning};
+use crate::model::{GroupedScanResult, Mark, ScanResult, ScanStats, ScanWarning};
 use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
     is_cancelled, mark_cancelled, record_warning, report_file_scanned, report_file_skipped,

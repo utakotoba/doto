@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
-use crate::domain::ScanWarning;
+use crate::model::ScanWarning;
 
 pub fn record_warning(
     progress: &Option<Arc<dyn ProgressReporter>>,

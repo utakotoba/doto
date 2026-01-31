@@ -9,7 +9,7 @@ use crate::syntax::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path
 use crate::config::ScanConfig;
 use crate::constants::{DEFAULT_MARK_REGEX, normalize_mark_bytes};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
-use crate::domain::Mark;
+use crate::model::Mark;
 use crate::scanner::report::is_cancelled;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

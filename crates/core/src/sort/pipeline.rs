@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::domain::Mark;
+use crate::model::Mark;
 use crate::sort::config::{DimensionStage, SortConfig};
 use crate::sort::stages::group_for_stage;
 
