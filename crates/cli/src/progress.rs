@@ -101,7 +101,7 @@ impl ProgressReporter for DeferredProgress {
 
     fn on_match(&self, _mark: &Mark) {
         let next = self.matches.fetch_add(1, Ordering::Relaxed) + 1;
-        if next % 100 == 0 {
+        if next.is_multiple_of(100) {
             self.refresh(true);
         }
     }

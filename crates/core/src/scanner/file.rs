@@ -96,10 +96,11 @@ fn leading_mark_pos(
                 while pos < range_end && (line[pos] == b'/' || line[pos] == b'!') {
                     pos += 1;
                 }
-            } else if token.first() == Some(&b'#') {
-                if pos < range_end && line[pos] == b'!' {
-                    pos += 1;
-                }
+            } else if token.first() == Some(&b'#')
+                && pos < range_end
+                && line[pos] == b'!'
+            {
+                pos += 1;
             }
             pos = skip_ws(line, pos, range_end);
             return (pos < range_end).then_some(pos);
@@ -115,10 +116,8 @@ fn leading_mark_pos(
         }
     }
 
-    if allow_block_marker {
-        if pos < range_end && (line[pos] == b'*' || line[pos] == b'!') {
-            pos += 1;
-        }
+    if allow_block_marker && pos < range_end && (line[pos] == b'*' || line[pos] == b'!') {
+        pos += 1;
     }
     pos = skip_ws(line, pos, range_end);
     (pos < range_end).then_some(pos)

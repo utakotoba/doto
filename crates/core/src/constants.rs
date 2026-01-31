@@ -78,7 +78,7 @@ pub fn normalize_mark_bytes(input: &[u8]) -> Option<&'static str> {
         }
         let mut matches = true;
         for (left, right) in bytes.iter().zip(input) {
-            if left.to_ascii_uppercase() != right.to_ascii_uppercase() {
+            if !left.eq_ignore_ascii_case(right) {
                 matches = false;
                 break;
             }

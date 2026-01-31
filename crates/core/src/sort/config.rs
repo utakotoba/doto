@@ -32,18 +32,10 @@ pub enum DimensionStage {
     Folder(FolderSortConfig),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MarkSortConfig {
     pub overrides: Vec<MarkPriorityOverride>,
-}
-
-impl Default for MarkSortConfig {
-    fn default() -> Self {
-        Self {
-            overrides: Vec::new(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -60,17 +52,12 @@ impl Default for LanguageSortConfig {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LanguageOrder {
+    #[default]
     CountDescNameAsc,
     NameAsc,
-}
-
-impl Default for LanguageOrder {
-    fn default() -> Self {
-        Self::CountDescNameAsc
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -101,17 +88,12 @@ impl Default for FolderSortConfig {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Order {
+    #[default]
     Asc,
     Desc,
-}
-
-impl Default for Order {
-    fn default() -> Self {
-        Self::Asc
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
