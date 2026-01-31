@@ -132,6 +132,7 @@ jobs:
                   VERSION_NO_V: ${{ env.VERSION_NO_V }}
               run: |
                   set -euo pipefail
+                  mkdir -p homebrew-tap/Formula
                   FORMULA_PATH="homebrew-tap/Formula/doto.rb"
 
                   cat > "$FORMULA_PATH" << EOF
