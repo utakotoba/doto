@@ -1,22 +1,22 @@
-mod syntax;
 mod config;
 mod constants;
 mod control;
-mod utils;
 mod error;
 mod filter;
 mod model;
 mod scanner;
 mod sort;
+mod syntax;
+mod utils;
 
 pub use config::{DetectionConfig, ScanConfig, ScanConfigBuilder};
 pub use control::{CancellationToken, ProgressReporter, SkipReason};
+pub use error::ScanError;
+pub use filter::{FilterConfig, FilterRule, ValuePredicate};
 pub use model::{
     Dimension, DimensionValue, GroupNode, GroupTree, GroupedScanResult, Mark, ScanResult,
     ScanStats, ScanWarning,
 };
-pub use error::ScanError;
-pub use filter::{FilterConfig, FilterRule, ValuePredicate};
 pub use scanner::Scanner;
 pub use sort::{
     DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,

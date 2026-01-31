@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::extract_dimension_value;
 use crate::model::{DimensionValue, Mark};
 use crate::sort::DimensionStage;
+use crate::utils::extract_dimension_value;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(default)]

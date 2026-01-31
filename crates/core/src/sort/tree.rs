@@ -4,11 +4,7 @@ use crate::model::{GroupNode, GroupTree, Mark};
 use crate::sort::config::{DimensionStage, SortConfig};
 use crate::sort::stages::group_for_stage;
 
-pub fn build_group_tree(
-    marks: Vec<Mark>,
-    config: &SortConfig,
-    roots: &[PathBuf],
-) -> GroupTree {
+pub fn build_group_tree(marks: Vec<Mark>, config: &SortConfig, roots: &[PathBuf]) -> GroupTree {
     if marks.is_empty() || config.pipeline.is_empty() {
         return GroupTree {
             groups: Vec::new(),
@@ -23,11 +19,7 @@ pub fn build_group_tree(
     }
 }
 
-fn build_groups(
-    stages: &[DimensionStage],
-    roots: &[PathBuf],
-    items: Vec<Mark>,
-) -> Vec<GroupNode> {
+fn build_groups(stages: &[DimensionStage], roots: &[PathBuf], items: Vec<Mark>) -> Vec<GroupNode> {
     if stages.is_empty() {
         return Vec::new();
     }

@@ -16,7 +16,9 @@ impl SnippetCache {
             .files
             .entry(path.to_path_buf())
             .or_insert_with(|| read_lines(path));
-        entry.get(line.saturating_sub(1) as usize).map(String::as_str)
+        entry
+            .get(line.saturating_sub(1) as usize)
+            .map(String::as_str)
     }
 }
 

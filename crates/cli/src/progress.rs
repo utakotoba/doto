@@ -41,7 +41,12 @@ impl DeferredProgress {
 
     pub fn finish(&self) {
         self.finished.store(true, Ordering::Relaxed);
-        if let Some(bar) = self.bar.lock().ok().and_then(|guard| guard.as_ref().cloned()) {
+        if let Some(bar) = self
+            .bar
+            .lock()
+            .ok()
+            .and_then(|guard| guard.as_ref().cloned())
+        {
             bar.finish_and_clear();
         }
     }

@@ -22,7 +22,11 @@ pub(crate) fn extract_dimension_value(
     }
 }
 
-pub(crate) fn folder_key(path: &std::path::Path, roots: &[PathBuf], config: &FolderSortConfig) -> PathBuf {
+pub(crate) fn folder_key(
+    path: &std::path::Path,
+    roots: &[PathBuf],
+    config: &FolderSortConfig,
+) -> PathBuf {
     let depth = config.depth;
     if depth == 0 {
         return PathBuf::new();

@@ -44,10 +44,10 @@ impl Scanner {
 
     pub fn scan(&self) -> Result<ScanResult, ScanError> {
         let output = self.scan_raw()?;
-        let filtered =
-            self.config
-                .filter_config()
-                .apply(output.marks, self.config.roots());
+        let filtered = self
+            .config
+            .filter_config()
+            .apply(output.marks, self.config.roots());
         let sorted_marks =
             apply_sort_pipeline(filtered, self.config.sort_config(), self.config.roots());
 
@@ -60,10 +60,10 @@ impl Scanner {
 
     pub fn scan_grouped(&self) -> Result<GroupedScanResult, ScanError> {
         let output = self.scan_raw()?;
-        let filtered =
-            self.config
-                .filter_config()
-                .apply(output.marks, self.config.roots());
+        let filtered = self
+            .config
+            .filter_config()
+            .apply(output.marks, self.config.roots());
         let tree = build_group_tree(filtered, self.config.sort_config(), self.config.roots());
 
         Ok(GroupedScanResult {

@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::constants::{DEFAULT_MARK_PRIORITIES, normalize_mark};
-use crate::utils::folder_key;
 use crate::model::{DimensionValue, Mark};
 use crate::sort::config::{
     DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
     MarkSortConfig, Order, PathSortConfig,
 };
 use crate::sort::group::Group;
+use crate::utils::folder_key;
 
 pub(crate) fn group_for_stage(
     stage: &DimensionStage,

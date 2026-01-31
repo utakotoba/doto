@@ -132,7 +132,8 @@ pub fn resolve_sort_config(
     if let Some(order) = args.sort_lang_order {
         let applied = apply_language_order(&mut config.pipeline, order);
         if applied == 0 {
-            warnings.push("sort-lang-order provided but pipeline has no language stage".to_string());
+            warnings
+                .push("sort-lang-order provided but pipeline has no language stage".to_string());
         }
     }
 
@@ -150,8 +151,7 @@ pub fn resolve_sort_config(
             args.sort_folder_order,
         );
         if applied == 0 {
-            warnings
-                .push("sort-folder-* provided but pipeline has no folder stage".to_string());
+            warnings.push("sort-folder-* provided but pipeline has no folder stage".to_string());
         }
     }
 

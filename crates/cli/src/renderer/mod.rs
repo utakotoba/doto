@@ -4,10 +4,10 @@ mod style;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use colored::Colorize;
-use doto_core::{DimensionValue, GroupNode, GroupTree, Mark};
 use crate::renderer::snippet::SnippetCache;
 use crate::renderer::style::{group_style_for, mark_header, mark_styled};
+use colored::Colorize;
+use doto_core::{DimensionValue, GroupNode, GroupTree, Mark};
 
 pub fn render_list(tree: &GroupTree, roots: &[PathBuf], file_header: bool) -> io::Result<()> {
     let mut stdout = io::BufWriter::new(io::stdout());
@@ -126,13 +126,7 @@ fn render_mark(
         out,
         "{}{} {}",
         indent(depth),
-        format!(
-            "{}:{}:{}",
-            relative.display(),
-            mark.line,
-            mark.column
-        )
-        .dimmed(),
+        format!("{}:{}:{}", relative.display(), mark.line, mark.column).dimmed(),
         styled_mark
     )?;
 

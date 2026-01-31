@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
-use rand::rngs::StdRng;
 use rand::Rng;
+use rand::rngs::StdRng;
 
 use crate::options::RunOptions;
 
@@ -125,7 +125,10 @@ fn generate_line(lang: &Lang, options: &RunOptions, rng: &mut StdRng, idx: usize
     if roll < options.mark_ratio + 0.05 {
         let mark = pick_mark(rng);
         if lang.raw_string {
-            return format!("let s = r#\"{} {} inside string\"#;", lang.line_comment, mark);
+            return format!(
+                "let s = r#\"{} {} inside string\"#;",
+                lang.line_comment, mark
+            );
         }
         if lang.ext == "go" {
             return format!("const s = `{} {} raw`;", lang.line_comment, mark);

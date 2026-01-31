@@ -5,12 +5,12 @@ use std::sync::Arc;
 
 use regex::bytes::Regex;
 
-use crate::syntax::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
 use crate::constants::{DEFAULT_MARK_REGEX, normalize_mark_bytes};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::model::Mark;
 use crate::scanner::report::is_cancelled;
+use crate::syntax::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ScanOutcome {
@@ -113,8 +113,7 @@ fn is_leading_mark(
     match_start: usize,
     spec: &SyntaxSpec,
 ) -> bool {
-    leading_mark_pos(line, range_start, range_end, spec)
-        .is_some_and(|pos| pos == match_start)
+    leading_mark_pos(line, range_start, range_end, spec).is_some_and(|pos| pos == match_start)
 }
 
 fn leading_mark_pos(
