@@ -15,10 +15,16 @@ Track, filter, and navigate code comment anchors like TODO, NOTE and FIXME direc
 
 ### Install
 
-Currently, we only support to install by cargo. Add Homebrew in the near future (via Tap).
+Currently, we only support to install by cargo.
 
 ```sh
 cargo install doto --locked
+```
+
+Or, using Homebrew for both macOS and Linux.
+
+```sh
+brew install utakotoba/tap/doto
 ```
 
 ### Basic usage
