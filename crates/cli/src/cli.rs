@@ -21,9 +21,6 @@ pub struct Cli {
     #[arg(value_name = "PATH")]
     pub roots: Vec<PathBuf>,
 
-    /// Override regex pattern
-    #[arg(long)]
-    pub regex: Option<String>,
 
     /// Include glob patterns (repeatable)
     #[arg(long = "include")]

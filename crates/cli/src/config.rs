@@ -17,7 +17,6 @@ use crate::cli::{Cli, SortLangOrderArg, SortOrderArg};
 #[serde(default)]
 pub struct Config {
     pub roots: Vec<PathBuf>,
-    pub regex: Option<String>,
     pub include: Vec<String>,
     pub exclude: Vec<String>,
     pub gitignore: Option<bool>,
@@ -64,9 +63,6 @@ pub fn load_config_with_context(
 pub fn apply_args(config: &mut Config, args: &Cli) {
     if !args.roots.is_empty() {
         config.roots = args.roots.clone();
-    }
-    if let Some(regex) = &args.regex {
-        config.regex = Some(regex.clone());
     }
     if !args.include.is_empty() {
         config.include = args.include.clone();

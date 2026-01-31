@@ -21,9 +21,6 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     let reporter = progress.clone();
     builder = builder.progress_reporter_arc(reporter);
 
-    if let Some(regex) = config.regex {
-        builder = builder.regex(regex);
-    }
     for include in config.include {
         builder = builder.include(include);
     }
