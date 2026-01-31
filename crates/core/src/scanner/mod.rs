@@ -7,9 +7,7 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
 use ignore::WalkState;
-use regex::bytes::Regex;
-
-use crate::config::{DetectionConfig, ScanConfig};
+use crate::config::ScanConfig;
 use crate::control::SkipReason;
 use crate::error::ScanError;
 use crate::model::{GroupedScanResult, Mark, ScanIssueCounts, ScanResult, ScanSkipCounts, ScanStats};
@@ -23,7 +21,6 @@ use crate::sort::{apply_sort_pipeline, build_group_tree};
 
 pub struct Scanner {
     config: ScanConfig,
-    regex: Arc<Regex>,
 }
 
 impl Scanner {
@@ -32,14 +29,7 @@ impl Scanner {
             return Err(ScanError::EmptyRoots);
         }
 
-        let regex = match config.detection() {
-            DetectionConfig::Regex { pattern } => Regex::new(pattern)?,
-        };
-
-        Ok(Self {
-            config,
-            regex: Arc::new(regex),
-        })
+        Ok(Self { config })
     }
 
     pub fn scan(&self) -> Result<ScanResult, ScanError> {
@@ -75,7 +65,6 @@ impl Scanner {
         let counters = Arc::new(ScanCounters::default());
         let output = Arc::new(Mutex::new(SharedOutput::default()));
 
-        let regex = Arc::clone(&self.regex);
         let config = self.config.clone();
         let progress = self
             .config
@@ -94,13 +83,11 @@ impl Scanner {
 
             let counters_ref = Arc::clone(&counters);
             let output_ref = Arc::clone(&output);
-            let regex = Arc::clone(&regex);
             let config = config.clone();
             let progress = progress.clone();
             let cancellation = cancellation.clone();
 
             walker.run(move || {
-                let regex = Arc::clone(&regex);
                 let config = config.clone();
                 let progress = progress.clone();
                 let cancellation = cancellation.clone();
@@ -156,7 +143,6 @@ impl Scanner {
                     let before = local.marks.len();
                     match scan_file(
                         path,
-                        &regex,
                         &config,
                         &progress,
                         &cancellation,
@@ -204,6 +190,8 @@ impl Scanner {
             files_skipped: counters.files_skipped.load(Ordering::Relaxed),
             matches: counters.matches.load(Ordering::Relaxed),
             cancelled: counters.cancelled.load(Ordering::Relaxed),
+            skipped_expected: counters.skipped_expected.load(Ordering::Relaxed),
+            skipped_issues: counters.skipped_issues.load(Ordering::Relaxed),
             skips: ScanSkipCounts {
                 max_file_size: counters.skip_max_file_size.load(Ordering::Relaxed),
                 metadata: counters.skip_metadata.load(Ordering::Relaxed),

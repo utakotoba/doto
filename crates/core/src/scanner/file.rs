@@ -3,10 +3,7 @@ use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 use std::sync::Arc;
 
-use regex::bytes::Regex;
-
 use crate::config::ScanConfig;
-use crate::constants::{DEFAULT_MARK_REGEX, normalize_mark_bytes};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::model::Mark;
 use crate::scanner::report::is_cancelled;
@@ -21,7 +18,6 @@ pub enum ScanOutcome {
 
 pub fn scan_file(
     path: &Path,
-    regex: &Regex,
     config: &ScanConfig,
     progress: &Option<Arc<dyn ProgressReporter>>,
     cancellation: &Option<CancellationToken>,
@@ -30,8 +26,6 @@ pub fn scan_file(
     let Some(syntax) = syntax_for_path(path) else {
         return Ok(ScanOutcome::Skipped(SkipReason::UnsupportedSyntax));
     };
-    let use_default_detection = is_default_detection(config);
-
     let mut file = File::open(path)?;
     if is_binary_file(&mut file)? {
         return Ok(ScanOutcome::Skipped(SkipReason::Binary));
@@ -59,45 +53,20 @@ pub fn scan_file(
                 return;
             }
 
-            if use_default_detection {
-                if let Some(match_start) = leading_mark_pos(&buf, start, end, syntax.spec) {
-                    if let Some((mark, _len)) = match_builtin_mark(&buf[match_start..end]) {
-                        let entry = Mark {
-                            path: Arc::clone(&path),
-                            line: line_no,
-                            column: (match_start + 1) as u32,
-                            mark,
-                            language: syntax.language,
-                        };
-                        if let Some(progress) = progress.as_deref() {
-                            progress.on_match(&entry);
-                        }
-                        output.push(entry);
+            if let Some(match_start) = leading_mark_pos(&buf, start, end, syntax.spec) {
+                if let Some((mark, _len)) = match_builtin_mark(&buf[match_start..end]) {
+                    let entry = Mark {
+                        path: Arc::clone(&path),
+                        line: line_no,
+                        column: (match_start + 1) as u32,
+                        mark,
+                        language: syntax.language,
+                    };
+                    if let Some(progress) = progress.as_deref() {
+                        progress.on_match(&entry);
                     }
+                    output.push(entry);
                 }
-                return;
-            }
-
-            for found in regex.find_iter(&buf[start..end]) {
-                let match_start = start + found.start();
-                if !is_leading_mark(&buf, start, end, match_start, syntax.spec) {
-                    continue;
-                }
-                let raw = &buf[match_start..start + found.end()];
-                let Some(mark) = normalize_mark_bytes(raw) else {
-                    continue;
-                };
-                let entry = Mark {
-                    path: Arc::clone(&path),
-                    line: line_no,
-                    column: (match_start + 1) as u32,
-                    mark,
-                    language: syntax.language,
-                };
-                if let Some(progress) = progress.as_deref() {
-                    progress.on_match(&entry);
-                }
-                output.push(entry);
             }
         });
     }
@@ -109,21 +78,6 @@ fn is_binary_file(file: &mut File) -> io::Result<bool> {
     let mut buf = [0u8; 8192];
     let read = file.read(&mut buf)?;
     Ok(buf[..read].contains(&0))
-}
-
-fn is_default_detection(config: &ScanConfig) -> bool {
-    matches!(config.detection(), crate::config::DetectionConfig::Regex { pattern }
-        if pattern == DEFAULT_MARK_REGEX)
-}
-
-fn is_leading_mark(
-    line: &[u8],
-    range_start: usize,
-    range_end: usize,
-    match_start: usize,
-    spec: &SyntaxSpec,
-) -> bool {
-    leading_mark_pos(line, range_start, range_end, spec).is_some_and(|pos| pos == match_start)
 }
 
 fn leading_mark_pos(

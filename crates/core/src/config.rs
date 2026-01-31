@@ -1,21 +1,13 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::constants::DEFAULT_MARK_REGEX;
 use crate::control::{CancellationToken, ProgressConfig, ProgressReporter};
 use crate::filter::FilterConfig;
 use crate::sort::{DimensionStage, SortConfig};
 
-#[non_exhaustive]
-#[derive(Clone, Debug)]
-pub enum DetectionConfig {
-    Regex { pattern: String },
-}
-
 #[derive(Clone)]
 pub struct ScanConfig {
     roots: Vec<PathBuf>,
-    detection: DetectionConfig,
     include: Vec<String>,
     exclude: Vec<String>,
     follow_gitignore: bool,
@@ -37,10 +29,6 @@ impl ScanConfig {
 
     pub fn roots(&self) -> &[PathBuf] {
         &self.roots
-    }
-
-    pub fn detection(&self) -> &DetectionConfig {
-        &self.detection
     }
 
     pub fn include(&self) -> &[String] {
@@ -96,7 +84,6 @@ impl std::fmt::Debug for ScanConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ScanConfig")
             .field("roots", &self.roots)
-            .field("detection", &self.detection)
             .field("include", &self.include)
             .field("exclude", &self.exclude)
             .field("follow_gitignore", &self.follow_gitignore)
@@ -116,7 +103,6 @@ impl std::fmt::Debug for ScanConfig {
 #[derive(Clone)]
 pub struct ScanConfigBuilder {
     roots: Vec<PathBuf>,
-    detection: DetectionConfig,
     include: Vec<String>,
     exclude: Vec<String>,
     follow_gitignore: bool,
@@ -135,9 +121,6 @@ impl ScanConfigBuilder {
     pub fn new() -> Self {
         Self {
             roots: Vec::new(),
-            detection: DetectionConfig::Regex {
-                pattern: default_pattern().to_string(),
-            },
             include: Vec::new(),
             exclude: Vec::new(),
             follow_gitignore: true,
@@ -164,13 +147,6 @@ impl ScanConfigBuilder {
         P: Into<PathBuf>,
     {
         self.roots.extend(roots.into_iter().map(Into::into));
-        self
-    }
-
-    pub fn regex(mut self, pattern: impl Into<String>) -> Self {
-        self.detection = DetectionConfig::Regex {
-            pattern: pattern.into(),
-        };
         self
     }
 
@@ -250,7 +226,6 @@ impl ScanConfigBuilder {
     pub fn build(self) -> ScanConfig {
         ScanConfig {
             roots: self.roots,
-            detection: self.detection,
             include: self.include,
             exclude: self.exclude,
             follow_gitignore: self.follow_gitignore,
@@ -271,7 +246,6 @@ impl std::fmt::Debug for ScanConfigBuilder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ScanConfigBuilder")
             .field("roots", &self.roots)
-            .field("detection", &self.detection)
             .field("include", &self.include)
             .field("exclude", &self.exclude)
             .field("follow_gitignore", &self.follow_gitignore)
@@ -292,8 +266,4 @@ impl Default for ScanConfigBuilder {
     fn default() -> Self {
         Self::new()
     }
-}
-
-fn default_pattern() -> &'static str {
-    DEFAULT_MARK_REGEX
 }

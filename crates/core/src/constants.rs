@@ -32,8 +32,6 @@ pub const DEFAULT_MARK_PRIORITIES: &[MarkPriority] = &[
     },
 ];
 
-pub const DEFAULT_MARK_REGEX: &str = r"\b(?:ERROR|WARN|FIXME|TODO|NOTE|INFO)\b";
-
 const DEFAULT_EXCLUDES: &[&str] = &[
     "node_modules/",
     "target/",

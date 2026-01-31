@@ -8,6 +8,8 @@ pub struct ScanCounters {
     pub files_skipped: AtomicU64,
     pub matches: AtomicU64,
     pub cancelled: AtomicBool,
+    pub skipped_expected: AtomicU64,
+    pub skipped_issues: AtomicU64,
     pub skip_max_file_size: AtomicU64,
     pub skip_metadata: AtomicU64,
     pub skip_io: AtomicU64,
@@ -25,6 +27,8 @@ impl Default for ScanCounters {
             files_skipped: AtomicU64::new(0),
             matches: AtomicU64::new(0),
             cancelled: AtomicBool::new(false),
+            skipped_expected: AtomicU64::new(0),
+            skipped_issues: AtomicU64::new(0),
             skip_max_file_size: AtomicU64::new(0),
             skip_metadata: AtomicU64::new(0),
             skip_io: AtomicU64::new(0),
@@ -49,19 +53,24 @@ impl ScanCounters {
         match reason {
             SkipReason::MaxFileSize => {
                 self.skip_max_file_size.fetch_add(1, Ordering::Relaxed);
+                self.skipped_expected.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::Metadata => {
                 self.skip_metadata.fetch_add(1, Ordering::Relaxed);
+                self.skipped_issues.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::Io => {
                 self.skip_io.fetch_add(1, Ordering::Relaxed);
+                self.skipped_issues.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::UnsupportedSyntax => {
                 self.skip_unsupported_syntax
                     .fetch_add(1, Ordering::Relaxed);
+                self.skipped_expected.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::Binary => {
                 self.skip_binary.fetch_add(1, Ordering::Relaxed);
+                self.skipped_expected.fetch_add(1, Ordering::Relaxed);
             }
         }
     }

@@ -36,7 +36,6 @@
 //!
 //! let config = ScanConfig::builder()
 //!     .root(".")
-//!     .regex(r"\b(?:TODO|FIXME)\b")
 //!     .filter_config(filter)
 //!     .sort_config(SortConfig::default())
 //!     .build();
@@ -56,7 +55,7 @@ mod sort;
 mod syntax;
 mod utils;
 
-pub use config::{DetectionConfig, ScanConfig, ScanConfigBuilder};
+pub use config::{ScanConfig, ScanConfigBuilder};
 pub use control::{CancellationToken, ProgressReporter, SkipReason};
 pub use error::ScanError;
 pub use filter::{FilterConfig, FilterRule, ValuePredicate};

@@ -20,6 +20,8 @@ pub struct ScanStats {
     pub files_skipped: u64,
     pub matches: u64,
     pub cancelled: bool,
+    pub skipped_expected: u64,
+    pub skipped_issues: u64,
     pub skips: ScanSkipCounts,
     pub issues: ScanIssueCounts,
 }
