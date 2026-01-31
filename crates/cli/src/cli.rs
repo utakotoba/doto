@@ -77,7 +77,6 @@ pub struct Cli {
     #[arg(long, value_enum)]
     pub sort_path_order: Option<SortOrderArg>,
 
-
     /// Folder group depth (relative to scan root)
     #[arg(long)]
     pub sort_folder_depth: Option<usize>,

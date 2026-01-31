@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use doto_core::{Mark, ScanResult, SortConfig};
 
-use crate::commands::renderer::pipeline::{GroupKey, GroupNode, build_group_tree};
-use crate::commands::renderer::snippet::SnippetCache;
-use crate::commands::renderer::style::{group_style_for, mark_header, mark_styled};
+use crate::renderer::pipeline::{GroupKey, GroupNode, build_group_tree};
+use crate::renderer::snippet::SnippetCache;
+use crate::renderer::style::{group_style_for, mark_header, mark_styled};
 
 pub fn render_list(
     result: &ScanResult,

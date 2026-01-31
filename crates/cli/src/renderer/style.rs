@@ -1,6 +1,6 @@
 use colored::{ColoredString, Colorize};
 
-use crate::commands::renderer::pipeline::GroupKey;
+use crate::renderer::pipeline::GroupKey;
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum GroupStyle {

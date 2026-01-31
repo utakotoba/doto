@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex};
 
 use doto_core::{ScanConfig, scan};
 
-use crate::commands::renderer::render_list;
 use crate::config::Config;
 use crate::messages::{MessageLevel, MessageSink, render_messages};
 use crate::progress::DeferredProgress;
+use crate::renderer::render_list;
 
 pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Error>> {
     let roots = if config.roots.is_empty() {

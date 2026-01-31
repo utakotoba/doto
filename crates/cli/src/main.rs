@@ -1,16 +1,17 @@
 mod cli;
-mod commands;
 mod config;
+mod list;
 mod messages;
 mod progress;
+mod renderer;
 
 use std::error::Error;
 
 use clap::Parser;
 
 use crate::cli::Cli;
-use crate::commands::run_list;
 use crate::config::{apply_args, load_config_with_context, resolve_sort_config};
+use crate::list::run_list;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
