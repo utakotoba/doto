@@ -13,13 +13,14 @@ use crate::config::{DetectionConfig, ScanConfig};
 use crate::control::SkipReason;
 use crate::error::ScanError;
 use crate::model::{Mark, ScanResult, ScanStats, ScanWarning};
+use crate::result::GroupedScanResult;
 use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
     is_cancelled, mark_cancelled, record_warning, report_file_scanned, report_file_skipped,
 };
 use crate::scanner::stats::ScanCounters;
 use crate::scanner::walk::build_walk_builder;
-use crate::sort::apply_sort_pipeline;
+use crate::sort::{apply_sort_pipeline, build_group_tree};
 
 pub struct Scanner {
     config: ScanConfig,
@@ -43,6 +44,29 @@ impl Scanner {
     }
 
     pub fn scan(&self) -> Result<ScanResult, ScanError> {
+        let output = self.scan_raw()?;
+        let sorted_marks =
+            apply_sort_pipeline(output.marks, self.config.sort_config(), self.config.roots());
+
+        Ok(ScanResult {
+            marks: sorted_marks,
+            stats: output.stats,
+            warnings: output.warnings,
+        })
+    }
+
+    pub fn scan_grouped(&self) -> Result<GroupedScanResult, ScanError> {
+        let output = self.scan_raw()?;
+        let tree = build_group_tree(output.marks, self.config.sort_config(), self.config.roots());
+
+        Ok(GroupedScanResult {
+            tree,
+            stats: output.stats,
+            warnings: output.warnings,
+        })
+    }
+
+    fn scan_raw(&self) -> Result<RawScanOutput, ScanError> {
         let counters = Arc::new(ScanCounters::default());
         let output = Arc::new(Mutex::new(SharedOutput::default()));
 
@@ -182,10 +206,8 @@ impl Scanner {
             cancelled: counters.cancelled.load(Ordering::Relaxed),
         };
 
-        let sorted_marks = apply_sort_pipeline(output.marks, config.sort_config(), config.roots());
-
-        Ok(ScanResult {
-            marks: sorted_marks,
+        Ok(RawScanOutput {
+            marks: output.marks,
             stats,
             warnings: output.warnings,
         })
@@ -203,6 +225,13 @@ struct LocalOutput {
     marks: Vec<Mark>,
     warnings: Vec<ScanWarning>,
     shared: Arc<Mutex<SharedOutput>>,
+}
+
+#[derive(Clone, Debug)]
+struct RawScanOutput {
+    marks: Vec<Mark>,
+    stats: ScanStats,
+    warnings: Vec<ScanWarning>,
 }
 
 impl LocalOutput {

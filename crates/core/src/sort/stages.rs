@@ -7,20 +7,7 @@ use crate::sort::config::{
     FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
     Order, PathSortConfig, SortStage,
 };
-
-#[derive(Debug)]
-pub(crate) struct Group {
-    pub(crate) items: Vec<Mark>,
-    key: GroupKey,
-}
-
-#[derive(Debug)]
-enum GroupKey {
-    Mark(&'static str),
-    Language(&'static str),
-    Path(PathBuf),
-    Folder(PathBuf),
-}
+use crate::sort::group::{Group, GroupKey};
 
 pub(crate) fn group_for_stage(
     stage: &SortStage,
