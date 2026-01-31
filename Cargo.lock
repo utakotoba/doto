@@ -312,7 +312,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "doto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "colored",
@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "doto-bench"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "colored",
@@ -336,7 +336,7 @@ dependencies = [
 
 [[package]]
 name = "doto-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ignore",
  "memchr",
