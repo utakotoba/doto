@@ -1,4 +1,3 @@
-mod pipeline;
 mod snippet;
 mod style;
 
@@ -6,44 +5,23 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-use doto_core::{Mark, ScanResult, SortConfig};
-
-use crate::renderer::pipeline::{GroupKey, GroupNode, build_group_tree};
+use doto_core::{GroupKey, GroupNode, GroupTree, Mark};
 use crate::renderer::snippet::SnippetCache;
 use crate::renderer::style::{group_style_for, mark_header, mark_styled};
 
-pub fn render_list(
-    result: &ScanResult,
-    roots: &[PathBuf],
-    sort_config: Option<&SortConfig>,
-    file_header: bool,
-) -> io::Result<()> {
+pub fn render_list(tree: &GroupTree, roots: &[PathBuf], file_header: bool) -> io::Result<()> {
     let mut stdout = io::BufWriter::new(io::stdout());
-    let line_width = line_number_width(result.marks.as_slice());
+    let line_width = line_number_width(tree);
     let mut snippet_cache = SnippetCache::default();
 
-    if result.marks.is_empty() {
+    if tree.total() == 0 {
         return Ok(());
     }
 
-    let default_sort;
-    let pipeline = if let Some(config) = sort_config {
-        config.pipeline.as_slice()
-    } else {
-        default_sort = SortConfig::default();
-        default_sort.pipeline.as_slice()
-    };
-
-    let groups = if pipeline.is_empty() {
-        Vec::new()
-    } else {
-        build_group_tree(result.marks.as_slice(), pipeline, roots)
-    };
-
-    if groups.is_empty() {
+    if tree.groups.is_empty() {
         render_file_groups(
             &mut stdout,
-            result.marks.as_slice(),
+            tree.items.as_slice(),
             roots,
             &mut snippet_cache,
             line_width,
@@ -53,7 +31,7 @@ pub fn render_list(
     } else {
         render_groups(
             &mut stdout,
-            &groups,
+            &tree.groups,
             roots,
             &mut snippet_cache,
             line_width,
@@ -75,17 +53,17 @@ fn render_groups(
     file_header: bool,
 ) -> io::Result<()> {
     for group in groups {
-        let label = group.label(roots);
+        let label = group_label(&group.key, roots);
         let header = format!("{label} ({})", group.count);
         let styled_header = match &group.key {
             GroupKey::Mark(mark) => mark_header(mark, &header),
             _ => group_style_for(&group.key).apply(header),
         };
         writeln!(out, "{}{}", indent(depth), styled_header)?;
-        if !group.children.is_empty() {
+        if !group.groups.is_empty() {
             render_groups(
                 out,
-                &group.children,
+                &group.groups,
                 roots,
                 snippets,
                 line_width,
@@ -170,13 +148,31 @@ fn indent(depth: usize) -> String {
     INDENT.repeat(depth)
 }
 
-fn line_number_width(marks: &[Mark]) -> usize {
+fn line_number_width(tree: &GroupTree) -> usize {
     let mut max_line = 1u32;
-    for mark in marks {
-        max_line = max_line.max(mark.line);
+    if !tree.items.is_empty() {
+        for mark in &tree.items {
+            max_line = max_line.max(mark.line);
+        }
+    }
+    if !tree.groups.is_empty() {
+        max_line = max_line.max(max_line_in_groups(&tree.groups));
     }
     let digits = max_line.to_string().len();
     digits.max(3)
+}
+
+fn max_line_in_groups(groups: &[GroupNode]) -> u32 {
+    let mut max_line = 1u32;
+    for group in groups {
+        for mark in &group.items {
+            max_line = max_line.max(mark.line);
+        }
+        if !group.groups.is_empty() {
+            max_line = max_line.max(max_line_in_groups(&group.groups));
+        }
+    }
+    max_line
 }
 
 fn relativize_path(path: &Path, roots: &[PathBuf]) -> PathBuf {
@@ -205,6 +201,25 @@ fn relativize_path(path: &Path, roots: &[PathBuf]) -> PathBuf {
     path.file_name()
         .map(PathBuf::from)
         .unwrap_or_else(|| path.to_path_buf())
+}
+
+fn group_label(key: &GroupKey, roots: &[PathBuf]) -> String {
+    match key {
+        GroupKey::Mark(value) => format!("mark: {value}"),
+        GroupKey::Language(value) => format!("language: {value}"),
+        GroupKey::Path(value) => format!("path: {}", display_group_path(value, roots)),
+        GroupKey::Folder(value) => format!("folder: {}", display_group_path(value, roots)),
+    }
+}
+
+fn display_group_path(path: &Path, roots: &[PathBuf]) -> String {
+    if !path.is_absolute() {
+        if path.as_os_str().is_empty() {
+            return ".".to_string();
+        }
+        return path.display().to_string();
+    }
+    relativize_path(path, roots).display().to_string()
 }
 
 struct FileBucket {

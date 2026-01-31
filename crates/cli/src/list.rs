@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-use doto_core::{ScanConfig, scan};
+use doto_core::{ScanConfig, scan_grouped};
 
 use crate::config::Config;
 use crate::messages::{MessageLevel, MessageSink, render_messages};
@@ -52,15 +52,15 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     progress
         .clone()
         .start_if_slow(std::time::Duration::from_millis(1500));
-    let result = scan(builder.build())?;
+    let result = scan_grouped(builder.build())?;
     progress.finish();
-    if result.marks.len() > 76 {
+    if result.tree.total() > 76 {
         if let Ok(mut sink) = messages.lock() {
             sink.push(
                 MessageLevel::Warning,
                 format!(
                     "too many results ({}) to display well in the terminal; please narrow the scan directory or filters",
-                    result.marks.len()
+                    result.tree.total()
                 ),
             );
         }
@@ -68,9 +68,9 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         return Ok(());
     }
 
-    render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
+    render_list(&result.tree, &roots, config.file_header)?;
 
-    if result.marks.is_empty() {
+    if result.tree.total() == 0 {
         if let Ok(mut sink) = messages.lock() {
             sink.push(MessageLevel::Success, "no marks found");
         }
