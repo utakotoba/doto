@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs;
 
-use doto_core::{LanguageSortConfig, MarkSortConfig, ScanConfig, SortStage, scan};
+use doto_core::{DimensionStage, LanguageSortConfig, MarkSortConfig, ScanConfig, scan};
 use tempfile::TempDir;
 
 #[test]
@@ -18,8 +18,8 @@ fn scan_applies_sort_pipeline() -> Result<(), Box<dyn Error>> {
     fs::write(&ts_fixme, "// FIXME: ts\n")?;
 
     let pipeline = vec![
-        SortStage::Mark(MarkSortConfig::default()),
-        SortStage::Language(LanguageSortConfig::default()),
+        DimensionStage::Mark(MarkSortConfig::default()),
+        DimensionStage::Language(LanguageSortConfig::default()),
     ];
 
     let config = ScanConfig::builder()

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use crate::model::Mark;
-use crate::sort::config::{SortConfig, SortStage};
+use crate::domain::Mark;
+use crate::sort::config::{DimensionStage, SortConfig};
 use crate::sort::stages::group_for_stage;
 
 pub fn apply_sort_pipeline(marks: Vec<Mark>, config: &SortConfig, roots: &[PathBuf]) -> Vec<Mark> {
@@ -14,7 +14,7 @@ pub fn apply_sort_pipeline(marks: Vec<Mark>, config: &SortConfig, roots: &[PathB
 }
 
 fn sort_recursive(
-    stages: &[SortStage],
+    stages: &[DimensionStage],
     roots: &[PathBuf],
     items: Vec<Mark>,
     output: &mut Vec<Mark>,

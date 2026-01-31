@@ -6,8 +6,8 @@ use config::{Config as ConfigSource, ConfigError, Environment, File};
 use serde::Deserialize;
 
 use doto_core::{
-    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
-    Order, PathSortConfig, SortConfig, SortStage,
+    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
+    MarkSortConfig, Order, PathSortConfig, SortConfig,
 };
 
 use crate::cli::{Cli, ConfigFormat, SortLangOrderArg, SortOrderArg};
@@ -178,14 +178,14 @@ fn has_sort_options(args: &Cli) -> bool {
         || args.sort_folder_order.is_some()
 }
 
-fn parse_pipeline(raw: &str) -> Result<Vec<SortStage>, Box<dyn Error>> {
+fn parse_pipeline(raw: &str) -> Result<Vec<DimensionStage>, Box<dyn Error>> {
     let mut pipeline = Vec::new();
     for token in raw.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()) {
         let stage = match token {
-            "mark" => SortStage::Mark(MarkSortConfig::default()),
-            "language" => SortStage::Language(LanguageSortConfig::default()),
-            "path" => SortStage::Path(PathSortConfig::default()),
-            "folder" => SortStage::Folder(FolderSortConfig::default()),
+            "mark" => DimensionStage::Mark(MarkSortConfig::default()),
+            "language" => DimensionStage::Language(LanguageSortConfig::default()),
+            "path" => DimensionStage::Path(PathSortConfig::default()),
+            "folder" => DimensionStage::Folder(FolderSortConfig::default()),
             _ => {
                 return Err(format!("unknown sort stage '{token}'").into());
             }
@@ -228,10 +228,13 @@ fn parse_mark_overrides(raw: &str) -> Result<Vec<MarkPriorityOverride>, Box<dyn 
     Ok(overrides)
 }
 
-fn apply_mark_overrides(pipeline: &mut [SortStage], overrides: Vec<MarkPriorityOverride>) -> usize {
+fn apply_mark_overrides(
+    pipeline: &mut [DimensionStage],
+    overrides: Vec<MarkPriorityOverride>,
+) -> usize {
     let mut applied = 0;
     for stage in pipeline {
-        if let SortStage::Mark(config) = stage {
+        if let DimensionStage::Mark(config) = stage {
             config.overrides = overrides.clone();
             applied += 1;
         }
@@ -239,10 +242,10 @@ fn apply_mark_overrides(pipeline: &mut [SortStage], overrides: Vec<MarkPriorityO
     applied
 }
 
-fn apply_language_order(pipeline: &mut [SortStage], order: SortLangOrderArg) -> usize {
+fn apply_language_order(pipeline: &mut [DimensionStage], order: SortLangOrderArg) -> usize {
     let mut applied = 0;
     for stage in pipeline {
-        if let SortStage::Language(config) = stage {
+        if let DimensionStage::Language(config) = stage {
             config.order = match order {
                 SortLangOrderArg::Count => LanguageOrder::CountDescNameAsc,
                 SortLangOrderArg::Name => LanguageOrder::NameAsc,
@@ -253,10 +256,10 @@ fn apply_language_order(pipeline: &mut [SortStage], order: SortLangOrderArg) -> 
     applied
 }
 
-fn apply_path_order(pipeline: &mut [SortStage], order: SortOrderArg) -> usize {
+fn apply_path_order(pipeline: &mut [DimensionStage], order: SortOrderArg) -> usize {
     let mut applied = 0;
     for stage in pipeline {
-        if let SortStage::Path(config) = stage {
+        if let DimensionStage::Path(config) = stage {
             config.order = map_order(order);
             applied += 1;
         }
@@ -265,13 +268,13 @@ fn apply_path_order(pipeline: &mut [SortStage], order: SortOrderArg) -> usize {
 }
 
 fn apply_folder_options(
-    pipeline: &mut [SortStage],
+    pipeline: &mut [DimensionStage],
     depth: Option<usize>,
     order: Option<SortOrderArg>,
 ) -> usize {
     let mut applied = 0;
     for stage in pipeline {
-        if let SortStage::Folder(config) = stage {
+        if let DimensionStage::Folder(config) = stage {
             if let Some(depth) = depth {
                 config.depth = depth;
             }

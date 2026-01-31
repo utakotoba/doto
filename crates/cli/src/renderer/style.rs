@@ -1,6 +1,6 @@
 use colored::{ColoredString, Colorize};
 
-use doto_core::GroupKey;
+use doto_core::DimensionValue;
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum GroupStyle {
@@ -33,12 +33,12 @@ pub(crate) fn mark_styled(mark: &str) -> ColoredString {
     }
 }
 
-pub(crate) fn group_style_for(key: &GroupKey) -> GroupStyle {
+pub(crate) fn group_style_for(key: &DimensionValue) -> GroupStyle {
     match key {
-        GroupKey::Mark(_) => GroupStyle::Mark,
-        GroupKey::Language(_) => GroupStyle::Language,
-        GroupKey::Path(_) => GroupStyle::Path,
-        GroupKey::Folder(_) => GroupStyle::Folder,
+        DimensionValue::Mark(_) => GroupStyle::Mark,
+        DimensionValue::Language(_) => GroupStyle::Language,
+        DimensionValue::Path(_) => GroupStyle::Path,
+        DimensionValue::Folder(_) => GroupStyle::Folder,
     }
 }
 

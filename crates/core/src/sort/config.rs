@@ -1,13 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+use crate::domain::Dimension;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SortConfig {
-    pub pipeline: Vec<SortStage>,
+    pub pipeline: Vec<DimensionStage>,
 }
 
 impl SortConfig {
-    pub fn with_pipeline(pipeline: Vec<SortStage>) -> Self {
+    pub fn with_pipeline(pipeline: Vec<DimensionStage>) -> Self {
         Self { pipeline }
     }
 }
@@ -16,8 +18,8 @@ impl Default for SortConfig {
     fn default() -> Self {
         Self {
             pipeline: vec![
-                SortStage::Mark(MarkSortConfig::default()),
-                SortStage::Language(LanguageSortConfig::default()),
+                DimensionStage::Mark(MarkSortConfig::default()),
+                DimensionStage::Language(LanguageSortConfig::default()),
             ],
         }
     }
@@ -25,11 +27,22 @@ impl Default for SortConfig {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
-pub enum SortStage {
+pub enum DimensionStage {
     Mark(MarkSortConfig),
     Language(LanguageSortConfig),
     Path(PathSortConfig),
     Folder(FolderSortConfig),
+}
+
+impl DimensionStage {
+    pub fn dimension(&self) -> Dimension {
+        match self {
+            DimensionStage::Mark(_) => Dimension::Mark,
+            DimensionStage::Language(_) => Dimension::Language,
+            DimensionStage::Path(_) => Dimension::Path,
+            DimensionStage::Folder(_) => Dimension::Folder,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

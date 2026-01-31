@@ -6,9 +6,11 @@ mod tree;
 
 #[allow(unused_imports)]
 pub use config::{
-    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
-    Order, PathSortConfig, SortConfig, SortStage,
+    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
+    MarkSortConfig, Order, PathSortConfig, SortConfig,
 };
-pub use group::GroupKey;
+pub use crate::domain::DimensionValue;
 pub use pipeline::apply_sort_pipeline;
-pub use tree::{GroupNode, GroupTree, build_group_tree};
+pub use tree::build_group_tree;
+
+pub(crate) use stages::extract_dimension_value;

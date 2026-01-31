@@ -12,8 +12,7 @@ use regex::bytes::Regex;
 use crate::config::{DetectionConfig, ScanConfig};
 use crate::control::SkipReason;
 use crate::error::ScanError;
-use crate::model::{Mark, ScanResult, ScanStats, ScanWarning};
-use crate::result::GroupedScanResult;
+use crate::domain::{GroupedScanResult, Mark, ScanResult, ScanStats, ScanWarning};
 use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
     is_cancelled, mark_cancelled, record_warning, report_file_scanned, report_file_skipped,
@@ -45,8 +44,12 @@ impl Scanner {
 
     pub fn scan(&self) -> Result<ScanResult, ScanError> {
         let output = self.scan_raw()?;
+        let filtered =
+            self.config
+                .filter_config()
+                .apply(output.marks, self.config.roots());
         let sorted_marks =
-            apply_sort_pipeline(output.marks, self.config.sort_config(), self.config.roots());
+            apply_sort_pipeline(filtered, self.config.sort_config(), self.config.roots());
 
         Ok(ScanResult {
             marks: sorted_marks,
@@ -57,7 +60,11 @@ impl Scanner {
 
     pub fn scan_grouped(&self) -> Result<GroupedScanResult, ScanError> {
         let output = self.scan_raw()?;
-        let tree = build_group_tree(output.marks, self.config.sort_config(), self.config.roots());
+        let filtered =
+            self.config
+                .filter_config()
+                .apply(output.marks, self.config.roots());
+        let tree = build_group_tree(filtered, self.config.sort_config(), self.config.roots());
 
         Ok(GroupedScanResult {
             tree,

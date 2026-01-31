@@ -2,21 +2,24 @@ mod comments;
 mod config;
 mod constants;
 mod control;
+mod domain;
 mod error;
-mod model;
-mod result;
+mod filter;
 mod scanner;
 mod sort;
 
 pub use config::{DetectionConfig, ScanConfig, ScanConfigBuilder};
 pub use control::{CancellationToken, ProgressReporter, SkipReason};
+pub use domain::{
+    Dimension, DimensionValue, GroupNode, GroupTree, GroupedScanResult, Mark, ScanResult, ScanStats,
+    ScanWarning,
+};
 pub use error::ScanError;
-pub use model::{Mark, ScanResult, ScanStats, ScanWarning};
-pub use result::GroupedScanResult;
+pub use filter::{FilterConfig, FilterRule, ValuePredicate};
 pub use scanner::Scanner;
 pub use sort::{
-    FolderSortConfig, GroupKey, GroupNode, GroupTree, LanguageOrder, LanguageSortConfig,
-    MarkPriorityOverride, MarkSortConfig, Order, PathSortConfig, SortConfig, SortStage,
+    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
+    MarkSortConfig, Order, PathSortConfig, SortConfig,
 };
 
 pub fn scan(config: ScanConfig) -> Result<ScanResult, ScanError> {

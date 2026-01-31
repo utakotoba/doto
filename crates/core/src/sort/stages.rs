@@ -2,23 +2,24 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::constants::{DEFAULT_MARK_PRIORITIES, normalize_mark};
-use crate::model::Mark;
+use crate::domain::Mark;
 use crate::sort::config::{
-    FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride, MarkSortConfig,
-    Order, PathSortConfig, SortStage,
+    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
+    MarkSortConfig, Order, PathSortConfig,
 };
-use crate::sort::group::{Group, GroupKey};
+use crate::domain::DimensionValue;
+use crate::sort::group::Group;
 
 pub(crate) fn group_for_stage(
-    stage: &SortStage,
+    stage: &DimensionStage,
     items: Vec<Mark>,
     roots: &[PathBuf],
 ) -> Vec<Group> {
     match stage {
-        SortStage::Mark(config) => group_by_mark(items, config),
-        SortStage::Language(config) => group_by_language(items, config),
-        SortStage::Path(config) => group_by_path(items, config),
-        SortStage::Folder(config) => group_by_folder(items, config, roots),
+        DimensionStage::Mark(config) => group_by_mark(items, config),
+        DimensionStage::Language(config) => group_by_language(items, config),
+        DimensionStage::Path(config) => group_by_path(items, config),
+        DimensionStage::Folder(config) => group_by_folder(items, config, roots),
     }
 }
 
@@ -33,12 +34,12 @@ fn group_by_mark(items: Vec<Mark>, config: &MarkSortConfig) -> Vec<Group> {
     let mut groups = map
         .into_iter()
         .map(|(key, items)| Group {
-            key: GroupKey::Mark(key),
+            key: DimensionValue::Mark(key.into()),
             items,
         })
         .collect::<Vec<_>>();
     groups.sort_by(|a, b| {
-        let (GroupKey::Mark(a_key), GroupKey::Mark(b_key)) = (&a.key, &b.key) else {
+        let (DimensionValue::Mark(a_key), DimensionValue::Mark(b_key)) = (&a.key, &b.key) else {
             return std::cmp::Ordering::Equal;
         };
         let a_prio = mark_priority(a_key, &config.overrides).unwrap_or(u8::MAX);
@@ -56,7 +57,7 @@ fn group_by_language(items: Vec<Mark>, config: &LanguageSortConfig) -> Vec<Group
     let mut groups = map
         .into_iter()
         .map(|(key, items)| Group {
-            key: GroupKey::Language(key),
+            key: DimensionValue::Language(key.into()),
             items,
         })
         .collect::<Vec<_>>();
@@ -64,7 +65,8 @@ fn group_by_language(items: Vec<Mark>, config: &LanguageSortConfig) -> Vec<Group
     match config.order {
         LanguageOrder::CountDescNameAsc => {
             groups.sort_by(|a, b| {
-                let (GroupKey::Language(a_key), GroupKey::Language(b_key)) = (&a.key, &b.key)
+                let (DimensionValue::Language(a_key), DimensionValue::Language(b_key)) =
+                    (&a.key, &b.key)
                 else {
                     return std::cmp::Ordering::Equal;
                 };
@@ -76,7 +78,8 @@ fn group_by_language(items: Vec<Mark>, config: &LanguageSortConfig) -> Vec<Group
         }
         LanguageOrder::NameAsc => {
             groups.sort_by(|a, b| {
-                let (GroupKey::Language(a_key), GroupKey::Language(b_key)) = (&a.key, &b.key)
+                let (DimensionValue::Language(a_key), DimensionValue::Language(b_key)) =
+                    (&a.key, &b.key)
                 else {
                     return std::cmp::Ordering::Equal;
                 };
@@ -96,12 +99,12 @@ fn group_by_path(items: Vec<Mark>, config: &PathSortConfig) -> Vec<Group> {
     let mut groups = map
         .into_iter()
         .map(|(key, items)| Group {
-            key: GroupKey::Path(key),
+            key: DimensionValue::Path(key),
             items,
         })
         .collect::<Vec<_>>();
     groups.sort_by(|a, b| {
-        let (GroupKey::Path(a_key), GroupKey::Path(b_key)) = (&a.key, &b.key) else {
+        let (DimensionValue::Path(a_key), DimensionValue::Path(b_key)) = (&a.key, &b.key) else {
             return std::cmp::Ordering::Equal;
         };
         match config.order {
@@ -121,12 +124,13 @@ fn group_by_folder(items: Vec<Mark>, config: &FolderSortConfig, roots: &[PathBuf
     let mut groups = map
         .into_iter()
         .map(|(key, items)| Group {
-            key: GroupKey::Folder(key),
+            key: DimensionValue::Folder(key),
             items,
         })
         .collect::<Vec<_>>();
     groups.sort_by(|a, b| {
-        let (GroupKey::Folder(a_key), GroupKey::Folder(b_key)) = (&a.key, &b.key) else {
+        let (DimensionValue::Folder(a_key), DimensionValue::Folder(b_key)) = (&a.key, &b.key)
+        else {
             return std::cmp::Ordering::Equal;
         };
         match config.order {
@@ -177,4 +181,21 @@ fn mark_priority(mark: &str, overrides: &[MarkPriorityOverride]) -> Option<u8> {
         }
     }
     None
+}
+
+pub(crate) fn extract_dimension_value(
+    stage: &DimensionStage,
+    mark: &Mark,
+    roots: &[PathBuf],
+) -> Option<DimensionValue> {
+    match stage {
+        DimensionStage::Mark(_) => normalize_mark(mark.mark)
+            .map(|kind| DimensionValue::Mark(kind.into())),
+        DimensionStage::Language(_) => Some(DimensionValue::Language(mark.language.into())),
+        DimensionStage::Path(_) => Some(DimensionValue::Path((*mark.path).clone())),
+        DimensionStage::Folder(config) => {
+            let key = folder_key(mark.path.as_ref(), roots, config.depth);
+            Some(DimensionValue::Folder(key))
+        }
+    }
 }

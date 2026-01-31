@@ -5,7 +5,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-use doto_core::{GroupKey, GroupNode, GroupTree, Mark};
+use doto_core::{DimensionValue, GroupNode, GroupTree, Mark};
 use crate::renderer::snippet::SnippetCache;
 use crate::renderer::style::{group_style_for, mark_header, mark_styled};
 
@@ -56,7 +56,7 @@ fn render_groups(
         let label = group_label(&group.key, roots);
         let header = format!("{label} ({})", group.count);
         let styled_header = match &group.key {
-            GroupKey::Mark(mark) => mark_header(mark, &header),
+            DimensionValue::Mark(mark) => mark_header(mark.as_ref(), &header),
             _ => group_style_for(&group.key).apply(header),
         };
         writeln!(out, "{}{}", indent(depth), styled_header)?;
@@ -203,12 +203,12 @@ fn relativize_path(path: &Path, roots: &[PathBuf]) -> PathBuf {
         .unwrap_or_else(|| path.to_path_buf())
 }
 
-fn group_label(key: &GroupKey, roots: &[PathBuf]) -> String {
+fn group_label(key: &DimensionValue, roots: &[PathBuf]) -> String {
     match key {
-        GroupKey::Mark(value) => format!("mark: {value}"),
-        GroupKey::Language(value) => format!("language: {value}"),
-        GroupKey::Path(value) => format!("path: {}", display_group_path(value, roots)),
-        GroupKey::Folder(value) => format!("folder: {}", display_group_path(value, roots)),
+        DimensionValue::Mark(value) => format!("mark: {value}"),
+        DimensionValue::Language(value) => format!("language: {value}"),
+        DimensionValue::Path(value) => format!("path: {}", display_group_path(value, roots)),
+        DimensionValue::Folder(value) => format!("folder: {}", display_group_path(value, roots)),
     }
 }
 

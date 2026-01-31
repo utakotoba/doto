@@ -1,32 +1,8 @@
 use std::path::PathBuf;
 
-use crate::model::Mark;
-use crate::sort::config::{SortConfig, SortStage};
-use crate::sort::group::GroupKey;
+use crate::domain::{GroupNode, GroupTree, Mark};
+use crate::sort::config::{DimensionStage, SortConfig};
 use crate::sort::stages::group_for_stage;
-
-#[derive(Clone, Debug)]
-pub struct GroupTree {
-    pub groups: Vec<GroupNode>,
-    pub items: Vec<Mark>,
-}
-
-impl GroupTree {
-    pub fn total(&self) -> usize {
-        if self.groups.is_empty() {
-            return self.items.len();
-        }
-        self.groups.iter().map(|group| group.count).sum()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct GroupNode {
-    pub key: GroupKey,
-    pub count: usize,
-    pub groups: Vec<GroupNode>,
-    pub items: Vec<Mark>,
-}
 
 pub fn build_group_tree(
     marks: Vec<Mark>,
@@ -47,7 +23,11 @@ pub fn build_group_tree(
     }
 }
 
-fn build_groups(stages: &[SortStage], roots: &[PathBuf], items: Vec<Mark>) -> Vec<GroupNode> {
+fn build_groups(
+    stages: &[DimensionStage],
+    roots: &[PathBuf],
+    items: Vec<Mark>,
+) -> Vec<GroupNode> {
     if stages.is_empty() {
         return Vec::new();
     }
