@@ -52,7 +52,7 @@ struct Lang {
 }
 
 fn pick_language(rng: &mut StdRng) -> Lang {
-    match rng.gen_range(0..6) {
+    match rng.random_range(0..6) {
         0 => Lang {
             ext: "rs",
             line_comment: "//",
@@ -104,7 +104,7 @@ fn write_file(
     options: &RunOptions,
     rng: &mut StdRng,
 ) -> Result<u64, Box<dyn std::error::Error>> {
-    let lines = rng.gen_range(options.min_lines..=options.max_lines);
+    let lines = rng.random_range(options.min_lines..=options.max_lines);
     let mut content = String::new();
     for idx in 0..lines {
         let line = generate_line(lang, options, rng, idx);
@@ -116,7 +116,7 @@ fn write_file(
 }
 
 fn generate_line(lang: &Lang, options: &RunOptions, rng: &mut StdRng, idx: usize) -> String {
-    let roll: f64 = rng.r#gen();
+    let roll: f64 = rng.random();
     if roll < options.mark_ratio {
         let mark = pick_mark(rng);
         return format!("{} {}: generated", lang.line_comment, mark);
@@ -142,11 +142,11 @@ fn generate_line(lang: &Lang, options: &RunOptions, rng: &mut StdRng, idx: usize
         }
     }
 
-    format!("let v{} = {};", idx, rng.gen_range(0..1024))
+    format!("let v{} = {};", idx, rng.random_range(0..1024))
 }
 
 fn pick_mark(rng: &mut StdRng) -> &'static str {
-    match rng.gen_range(0..6) {
+    match rng.random_range(0..6) {
         0 => "TODO",
         1 => "FIXME",
         2 => "NOTE",
