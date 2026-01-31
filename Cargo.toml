@@ -5,7 +5,7 @@ members = ["crates/*", "bench"]
 
 # MARK: - workspace shared
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Ly"]
 license = "MIT"
 edition = "2024"
@@ -37,7 +37,7 @@ indicatif = "0.18"
 # for test and baseline
 tempfile = "3.10"
 # workspace crates
-doto-core = { version = "0.1.1", path = "crates/core" }
+doto-core = { version = "0.1.2", path = "crates/core" }
 
 # MARK: - build profile
 [profile.release]
