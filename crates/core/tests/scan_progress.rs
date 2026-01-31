@@ -12,7 +12,6 @@ struct TestProgress {
     files_scanned: AtomicUsize,
     files_skipped: AtomicUsize,
     matches: AtomicUsize,
-    warnings: AtomicUsize,
     cancelled: AtomicUsize,
     cancel_after_match: Option<CancellationToken>,
 }
@@ -31,10 +30,6 @@ impl ProgressReporter for TestProgress {
         if let Some(token) = &self.cancel_after_match {
             token.cancel();
         }
-    }
-
-    fn on_warning(&self, _warning: &doto_core::ScanWarning) {
-        self.warnings.fetch_add(1, Ordering::Relaxed);
     }
 
     fn on_cancelled(&self) {

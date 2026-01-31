@@ -12,12 +12,12 @@ use regex::bytes::Regex;
 use crate::config::{DetectionConfig, ScanConfig};
 use crate::control::SkipReason;
 use crate::error::ScanError;
-use crate::model::{GroupedScanResult, Mark, ScanResult, ScanStats, ScanWarning};
+use crate::model::{GroupedScanResult, Mark, ScanIssueCounts, ScanResult, ScanSkipCounts, ScanStats};
 use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
-    is_cancelled, mark_cancelled, record_warning, report_file_scanned, report_file_skipped,
+    is_cancelled, mark_cancelled, record_issue, report_file_scanned, report_file_skipped,
 };
-use crate::scanner::stats::ScanCounters;
+use crate::scanner::stats::{ScanCounters, WarningKind};
 use crate::scanner::walk::build_walk_builder;
 use crate::sort::{apply_sort_pipeline, build_group_tree};
 
@@ -54,7 +54,6 @@ impl Scanner {
         Ok(ScanResult {
             marks: sorted_marks,
             stats: output.stats,
-            warnings: output.warnings,
         })
     }
 
@@ -69,7 +68,6 @@ impl Scanner {
         Ok(GroupedScanResult {
             tree,
             stats: output.stats,
-            warnings: output.warnings,
         })
     }
 
@@ -119,9 +117,10 @@ impl Scanner {
 
                     let entry = match entry {
                         Ok(entry) => entry,
-                        Err(err) => {
-                            record_warning(&progress, &mut local.warnings, None, err.to_string());
+                        Err(_) => {
+                            record_issue(&counters, WarningKind::Walk);
                             counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                            counters.record_skip(SkipReason::Io);
                             return WalkState::Continue;
                         }
                     };
@@ -140,17 +139,14 @@ impl Scanner {
                             Ok(metadata) if metadata.len() > max_file_size => {
                                 report_file_skipped(&progress, path, SkipReason::MaxFileSize);
                                 counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                                counters.record_skip(SkipReason::MaxFileSize);
                                 return WalkState::Continue;
                             }
-                            Err(err) => {
-                                record_warning(
-                                    &progress,
-                                    &mut local.warnings,
-                                    Some(path.to_path_buf()),
-                                    err.to_string(),
-                                );
+                            Err(_) => {
+                                record_issue(&counters, WarningKind::Metadata);
                                 report_file_skipped(&progress, path, SkipReason::Metadata);
                                 counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                                counters.record_skip(SkipReason::Metadata);
                                 return WalkState::Continue;
                             }
                             _ => {}
@@ -177,6 +173,7 @@ impl Scanner {
                         Ok(ScanOutcome::Skipped(reason)) => {
                             report_file_skipped(&progress, path, reason);
                             counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                            counters.record_skip(reason);
                         }
                         Ok(ScanOutcome::Cancelled) => {
                             let added = local.marks.len().saturating_sub(before);
@@ -186,15 +183,11 @@ impl Scanner {
                             mark_cancelled(&counters.cancelled, &progress);
                             return WalkState::Quit;
                         }
-                        Err(err) => {
-                            record_warning(
-                                &progress,
-                                &mut local.warnings,
-                                Some(path.to_path_buf()),
-                                err.to_string(),
-                            );
+                        Err(_) => {
+                            record_issue(&counters, WarningKind::Io);
                             report_file_skipped(&progress, path, SkipReason::Io);
                             counters.files_skipped.fetch_add(1, Ordering::Relaxed);
+                            counters.record_skip(SkipReason::Io);
                         }
                     }
 
@@ -211,12 +204,23 @@ impl Scanner {
             files_skipped: counters.files_skipped.load(Ordering::Relaxed),
             matches: counters.matches.load(Ordering::Relaxed),
             cancelled: counters.cancelled.load(Ordering::Relaxed),
+            skips: ScanSkipCounts {
+                max_file_size: counters.skip_max_file_size.load(Ordering::Relaxed),
+                metadata: counters.skip_metadata.load(Ordering::Relaxed),
+                io: counters.skip_io.load(Ordering::Relaxed),
+                unsupported_syntax: counters.skip_unsupported_syntax.load(Ordering::Relaxed),
+                binary: counters.skip_binary.load(Ordering::Relaxed),
+            },
+            issues: ScanIssueCounts {
+                walk_errors: counters.warn_walk.load(Ordering::Relaxed),
+                metadata_errors: counters.warn_metadata.load(Ordering::Relaxed),
+                io_errors: counters.warn_io.load(Ordering::Relaxed),
+            },
         };
 
         Ok(RawScanOutput {
             marks: output.marks,
             stats,
-            warnings: output.warnings,
         })
     }
 }
@@ -224,13 +228,11 @@ impl Scanner {
 #[derive(Clone, Debug, Default)]
 struct SharedOutput {
     marks: Vec<Mark>,
-    warnings: Vec<ScanWarning>,
 }
 
 #[derive(Debug)]
 struct LocalOutput {
     marks: Vec<Mark>,
-    warnings: Vec<ScanWarning>,
     shared: Arc<Mutex<SharedOutput>>,
 }
 
@@ -238,14 +240,12 @@ struct LocalOutput {
 struct RawScanOutput {
     marks: Vec<Mark>,
     stats: ScanStats,
-    warnings: Vec<ScanWarning>,
 }
 
 impl LocalOutput {
     fn new(shared: Arc<Mutex<SharedOutput>>) -> Self {
         Self {
             marks: Vec::new(),
-            warnings: Vec::new(),
             shared,
         }
     }
@@ -253,11 +253,10 @@ impl LocalOutput {
 
 impl Drop for LocalOutput {
     fn drop(&mut self) {
-        if self.marks.is_empty() && self.warnings.is_empty() {
+        if self.marks.is_empty() {
             return;
         }
         let mut guard = self.shared.lock().unwrap_or_else(|err| err.into_inner());
         guard.marks.append(&mut self.marks);
-        guard.warnings.append(&mut self.warnings);
     }
 }

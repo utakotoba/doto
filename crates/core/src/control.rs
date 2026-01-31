@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::model::{Mark, ScanWarning};
+use crate::model::Mark;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -11,13 +11,13 @@ pub enum SkipReason {
     Metadata,
     Io,
     UnsupportedSyntax,
+    Binary,
 }
 
 pub trait ProgressReporter: Send + Sync {
     fn on_file_scanned(&self, _path: &Path) {}
     fn on_file_skipped(&self, _path: &Path, _reason: SkipReason) {}
     fn on_match(&self, _mark: &Mark) {}
-    fn on_warning(&self, _warning: &ScanWarning) {}
     fn on_cancelled(&self) {}
 }
 

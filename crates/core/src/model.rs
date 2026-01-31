@@ -20,26 +20,36 @@ pub struct ScanStats {
     pub files_skipped: u64,
     pub matches: u64,
     pub cancelled: bool,
+    pub skips: ScanSkipCounts,
+    pub issues: ScanIssueCounts,
 }
 
-#[derive(Clone, Debug)]
-pub struct ScanWarning {
-    pub path: Option<PathBuf>,
-    pub message: String,
+#[derive(Clone, Debug, Default)]
+pub struct ScanSkipCounts {
+    pub max_file_size: u64,
+    pub metadata: u64,
+    pub io: u64,
+    pub unsupported_syntax: u64,
+    pub binary: u64,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ScanIssueCounts {
+    pub walk_errors: u64,
+    pub metadata_errors: u64,
+    pub io_errors: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct ScanResult {
     pub marks: Vec<Mark>,
     pub stats: ScanStats,
-    pub warnings: Vec<ScanWarning>,
 }
 
 #[derive(Clone, Debug)]
 pub struct GroupedScanResult {
     pub tree: GroupTree,
     pub stats: ScanStats,
-    pub warnings: Vec<ScanWarning>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]

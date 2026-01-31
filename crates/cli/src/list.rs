@@ -73,25 +73,68 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         }
     }
 
-    if !warnings.is_empty() || !result.warnings.is_empty() {
+    if !warnings.is_empty()
+        || result.stats.issues.walk_errors > 0
+        || result.stats.issues.metadata_errors > 0
+        || result.stats.issues.io_errors > 0
+        || result.stats.files_skipped > 0
+    {
         if let Ok(mut sink) = messages.lock() {
             for warning in warnings {
                 sink.push(MessageLevel::Warning, warning);
             }
-            for warning in result.warnings {
-                if let Some(path) = warning.path {
-                    let path_display = path.display();
-                    sink.push(
-                        MessageLevel::Warning,
-                        format!("{}: {}", path_display, warning.message),
-                    );
-                } else {
-                    sink.push(MessageLevel::Warning, warning.message);
-                }
-            }
+            push_issue_summary(&mut sink, &result.stats);
+            push_skip_summary(&mut sink, &result.stats);
         }
     }
 
     render_messages(&messages.lock().unwrap().drain())?;
     Ok(())
+}
+
+fn push_issue_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {
+    let mut parts = Vec::new();
+    if stats.issues.walk_errors > 0 {
+        parts.push(format!("{} traversal errors", stats.issues.walk_errors));
+    }
+    if stats.issues.metadata_errors > 0 {
+        parts.push(format!("{} metadata errors", stats.issues.metadata_errors));
+    }
+    if stats.issues.io_errors > 0 {
+        parts.push(format!("{} I/O errors", stats.issues.io_errors));
+    }
+    if !parts.is_empty() {
+        sink.push(
+            MessageLevel::Warning,
+            format!("scan encountered {}", parts.join(", ")),
+        );
+    }
+}
+
+fn push_skip_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {
+    if stats.files_skipped == 0 {
+        return;
+    }
+    let mut parts = Vec::new();
+    if stats.skips.max_file_size > 0 {
+        parts.push(format!("max size {}", stats.skips.max_file_size));
+    }
+    if stats.skips.metadata > 0 {
+        parts.push(format!("metadata {}", stats.skips.metadata));
+    }
+    if stats.skips.io > 0 {
+        parts.push(format!("I/O {}", stats.skips.io));
+    }
+    if stats.skips.unsupported_syntax > 0 {
+        parts.push(format!("unsupported {}", stats.skips.unsupported_syntax));
+    }
+    if stats.skips.binary > 0 {
+        parts.push(format!("binary {}", stats.skips.binary));
+    }
+    if !parts.is_empty() {
+        sink.push(
+            MessageLevel::Warning,
+            format!("skipped files by reason: {}", parts.join(", ")),
+        );
+    }
 }

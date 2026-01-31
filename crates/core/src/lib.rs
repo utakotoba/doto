@@ -14,8 +14,8 @@ pub use control::{CancellationToken, ProgressReporter, SkipReason};
 pub use error::ScanError;
 pub use filter::{FilterConfig, FilterRule, ValuePredicate};
 pub use model::{
-    Dimension, DimensionValue, GroupNode, GroupTree, GroupedScanResult, Mark, ScanResult,
-    ScanStats, ScanWarning,
+    Dimension, DimensionValue, GroupNode, GroupTree, GroupedScanResult, Mark, ScanIssueCounts,
+    ScanResult, ScanSkipCounts, ScanStats,
 };
 pub use scanner::Scanner;
 pub use sort::{

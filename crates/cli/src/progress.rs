@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use doto_core::{Mark, ProgressReporter, ScanWarning, SkipReason};
+use doto_core::{Mark, ProgressReporter, SkipReason};
 
 pub struct DeferredProgress {
     active: AtomicBool,
@@ -104,10 +104,6 @@ impl ProgressReporter for DeferredProgress {
         if next % 100 == 0 {
             self.refresh(true);
         }
-    }
-
-    fn on_warning(&self, _warning: &ScanWarning) {
-        self.refresh(true);
     }
 
     fn on_cancelled(&self) {

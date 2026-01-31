@@ -3,19 +3,13 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
-use crate::model::ScanWarning;
+use crate::scanner::stats::{ScanCounters, WarningKind};
 
-pub fn record_warning(
-    progress: &Option<Arc<dyn ProgressReporter>>,
-    warnings: &mut Vec<ScanWarning>,
-    path: Option<std::path::PathBuf>,
-    message: String,
+pub fn record_issue(
+    counters: &ScanCounters,
+    kind: WarningKind,
 ) {
-    let warning = ScanWarning { path, message };
-    if let Some(progress) = progress.as_deref() {
-        progress.on_warning(&warning);
-    }
-    warnings.push(warning);
+    counters.record_issue(kind);
 }
 
 pub fn report_file_scanned(progress: &Option<Arc<dyn ProgressReporter>>, path: &Path) {

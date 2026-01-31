@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -32,7 +32,11 @@ pub fn scan_file(
     };
     let use_default_detection = is_default_detection(config);
 
-    let file = File::open(path)?;
+    let mut file = File::open(path)?;
+    if is_binary_file(&mut file)? {
+        return Ok(ScanOutcome::Skipped(SkipReason::Binary));
+    }
+    file.seek(SeekFrom::Start(0))?;
     let mut reader = BufReader::with_capacity(config.read_buffer_size(), file);
     let mut buf = Vec::with_capacity(4096);
     let mut line_no: u32 = 0;
@@ -99,6 +103,12 @@ pub fn scan_file(
     }
 
     Ok(ScanOutcome::Completed)
+}
+
+fn is_binary_file(file: &mut File) -> io::Result<bool> {
+    let mut buf = [0u8; 8192];
+    let read = file.read(&mut buf)?;
+    Ok(buf[..read].contains(&0))
 }
 
 fn is_default_detection(config: &ScanConfig) -> bool {

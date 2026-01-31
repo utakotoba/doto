@@ -16,6 +16,7 @@ pub fn build_walk_builder(config: &ScanConfig, root: &Path) -> Result<WalkBuilde
 
     let follow_gitignore = config.follow_gitignore();
     builder
+        .follow_links(false)
         .git_ignore(follow_gitignore)
         .git_exclude(follow_gitignore)
         .git_global(follow_gitignore)
