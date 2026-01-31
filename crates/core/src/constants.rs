@@ -11,11 +11,11 @@ pub const DEFAULT_MARK_PRIORITIES: &[MarkPriority] = &[
         priority: 0,
     },
     MarkPriority {
-        mark: "WARN",
+        mark: "FIXME",
         priority: 1,
     },
     MarkPriority {
-        mark: "FIXME",
+        mark: "WARN",
         priority: 2,
     },
     MarkPriority {
