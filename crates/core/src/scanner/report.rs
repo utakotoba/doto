@@ -5,10 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
 use crate::scanner::stats::{ScanCounters, WarningKind};
 
-pub fn record_issue(
-    counters: &ScanCounters,
-    kind: WarningKind,
-) {
+pub fn record_issue(counters: &ScanCounters, kind: WarningKind) {
     counters.record_issue(kind);
 }
 

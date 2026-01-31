@@ -8,7 +8,11 @@ use crate::messages::{MessageLevel, MessageSink, render_messages};
 use crate::progress::DeferredProgress;
 use crate::renderer::render_list;
 
-pub fn run_list(config: Config, warnings: Vec<String>, verbose: bool) -> Result<(), Box<dyn Error>> {
+pub fn run_list(
+    config: Config,
+    warnings: Vec<String>,
+    verbose: bool,
+) -> Result<(), Box<dyn Error>> {
     let roots = if config.roots.is_empty() {
         vec![std::env::current_dir()?]
     } else {
@@ -88,9 +92,7 @@ pub fn run_list(config: Config, warnings: Vec<String>, verbose: bool) -> Result<
 }
 
 fn has_issue_warnings(stats: &doto_core::ScanStats) -> bool {
-    stats.issues.walk_errors > 0
-        || stats.issues.metadata_errors > 0
-        || stats.issues.io_errors > 0
+    stats.issues.walk_errors > 0 || stats.issues.metadata_errors > 0 || stats.issues.io_errors > 0
 }
 
 fn push_scan_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {

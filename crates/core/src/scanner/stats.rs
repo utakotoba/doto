@@ -64,8 +64,7 @@ impl ScanCounters {
                 self.skipped_issues.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::UnsupportedSyntax => {
-                self.skip_unsupported_syntax
-                    .fetch_add(1, Ordering::Relaxed);
+                self.skip_unsupported_syntax.fetch_add(1, Ordering::Relaxed);
                 self.skipped_expected.fetch_add(1, Ordering::Relaxed);
             }
             SkipReason::Binary => {

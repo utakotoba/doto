@@ -10,7 +10,9 @@ use std::error::Error;
 use clap::Parser;
 
 use crate::cli::Cli;
-use crate::config::{apply_args, load_config_with_context, resolve_filter_config, resolve_sort_config};
+use crate::config::{
+    apply_args, load_config_with_context, resolve_filter_config, resolve_sort_config,
+};
 use crate::list::run_list;
 
 fn main() -> Result<(), Box<dyn Error>> {

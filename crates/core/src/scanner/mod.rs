@@ -6,11 +6,12 @@ mod walk;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
-use ignore::WalkState;
 use crate::config::ScanConfig;
 use crate::control::SkipReason;
 use crate::error::ScanError;
-use crate::model::{GroupedScanResult, Mark, ScanIssueCounts, ScanResult, ScanSkipCounts, ScanStats};
+use crate::model::{
+    GroupedScanResult, Mark, ScanIssueCounts, ScanResult, ScanSkipCounts, ScanStats,
+};
 use crate::scanner::file::{ScanOutcome, scan_file};
 use crate::scanner::report::{
     is_cancelled, mark_cancelled, record_issue, report_file_scanned, report_file_skipped,
@@ -18,6 +19,7 @@ use crate::scanner::report::{
 use crate::scanner::stats::{ScanCounters, WarningKind};
 use crate::scanner::walk::build_walk_builder;
 use crate::sort::{apply_sort_pipeline, build_group_tree};
+use ignore::WalkState;
 
 pub struct Scanner {
     config: ScanConfig,
@@ -141,13 +143,7 @@ impl Scanner {
                     }
 
                     let before = local.marks.len();
-                    match scan_file(
-                        path,
-                        &config,
-                        &progress,
-                        &cancellation,
-                        &mut local.marks,
-                    ) {
+                    match scan_file(path, &config, &progress, &cancellation, &mut local.marks) {
                         Ok(ScanOutcome::Completed) => {
                             counters.files_scanned.fetch_add(1, Ordering::Relaxed);
                             report_file_scanned(&progress, path);

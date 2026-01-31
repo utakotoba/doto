@@ -25,7 +25,6 @@ pub struct Cli {
     #[arg(long)]
     pub verbose: bool,
 
-
     /// Include glob patterns (repeatable)
     #[arg(long = "include")]
     pub include: Vec<String>,
