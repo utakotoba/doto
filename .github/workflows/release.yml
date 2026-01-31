@@ -5,6 +5,9 @@ on:
         tags:
             - "v*.*.*"
 
+permissions:
+    contents: write
+
 env:
     MSRV: "1.87"
 
