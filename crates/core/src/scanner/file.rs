@@ -96,10 +96,7 @@ fn leading_mark_pos(
                 while pos < range_end && (line[pos] == b'/' || line[pos] == b'!') {
                     pos += 1;
                 }
-            } else if token.first() == Some(&b'#')
-                && pos < range_end
-                && line[pos] == b'!'
-            {
+            } else if token.first() == Some(&b'#') && pos < range_end && line[pos] == b'!' {
                 pos += 1;
             }
             pos = skip_ws(line, pos, range_end);
