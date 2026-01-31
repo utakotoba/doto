@@ -1,5 +1,6 @@
 [package]
 name = "doto-core"
+description = "The comment mark searching engine used under doto cli tool"
 version.workspace = true
 authors.workspace = true
 license.workspace = true

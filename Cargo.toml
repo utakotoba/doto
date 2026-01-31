@@ -37,7 +37,7 @@ indicatif = "0.18"
 # for test and baseline
 tempfile = "3.10"
 # workspace crates
-doto-core = { path = "crates/core" }
+doto-core = { version = "*", path = "crates/core" }
 
 # MARK: - build profile
 [profile.release]

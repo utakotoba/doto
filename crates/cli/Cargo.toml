@@ -1,5 +1,6 @@
 [package]
 name = "doto"
+description = "Fast comment mark searching tool"
 version.workspace = true
 authors.workspace = true
 license.workspace = true
