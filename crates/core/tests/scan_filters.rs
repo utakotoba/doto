@@ -111,3 +111,45 @@ fn scan_builtin_excludes_can_be_disabled() -> Result<(), Box<dyn Error>> {
     assert_eq!(result.stats.matches, 1);
     Ok(())
 }
+
+#[test]
+fn scan_skips_binary_files() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let binary_path = temp.path().join("binary.rs");
+    fs::write(&binary_path, b"\0\0TODO in binary\0")?;
+
+    let config = ScanConfig::builder().root(temp.path()).build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.files_scanned, 0);
+    assert_eq!(result.stats.files_skipped, 1);
+    assert_eq!(result.stats.skips.binary, 1);
+    assert_eq!(result.stats.matches, 0);
+    Ok(())
+}
+
+#[test]
+#[cfg(unix)]
+fn scan_ignores_symlinked_files() -> Result<(), Box<dyn Error>> {
+    use std::os::unix::fs::symlink;
+
+    let temp = TempDir::new()?;
+    let target_path = temp.path().join("target.rs");
+    fs::write(&target_path, "// TODO: target\n")?;
+
+    let link_path = temp.path().join("link.rs");
+    symlink(&target_path, &link_path)?;
+
+    let config = ScanConfig::builder()
+        .root(temp.path())
+        .follow_gitignore(false)
+        .build();
+    let result = scan(config)?;
+
+    assert_eq!(result.stats.files_scanned, 1);
+    assert_eq!(result.stats.matches, 1);
+    assert_eq!(result.stats.skips.binary, 0);
+    assert_eq!(result.stats.skips.unsupported_syntax, 0);
+    assert_eq!(result.marks[0].path.as_ref(), &target_path);
+    Ok(())
+}
