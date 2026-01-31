@@ -9,10 +9,21 @@ env:
     MSRV: "1.87"
 
 jobs:
+    create-release:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  generate_release_notes: true
+
     build-artifacts:
         runs-on: ${{ matrix.os }}
         permissions:
             contents: write
+        needs: create-release
         strategy:
             matrix:
                 include:
