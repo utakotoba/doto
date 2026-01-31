@@ -48,6 +48,9 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     if let Some(sort_config) = &config.sort {
         builder = builder.sort_config(sort_config.clone());
     }
+    if let Some(filter_config) = &config.filter {
+        builder = builder.filter_config(filter_config.clone());
+    }
 
     progress
         .clone()

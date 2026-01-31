@@ -85,6 +85,38 @@ pub struct Cli {
     #[arg(long, value_enum)]
     pub sort_folder_order: Option<SortOrderArg>,
 
+    /// Allow list for marks (repeatable)
+    #[arg(long = "filter-mark", value_name = "MARK")]
+    pub filter_mark: Vec<String>,
+
+    /// Deny list for marks (repeatable)
+    #[arg(long = "filter-mark-deny", value_name = "MARK")]
+    pub filter_mark_deny: Vec<String>,
+
+    /// Allow list for languages (repeatable)
+    #[arg(long = "filter-language", value_name = "LANG")]
+    pub filter_language: Vec<String>,
+
+    /// Deny list for languages (repeatable)
+    #[arg(long = "filter-language-deny", value_name = "LANG")]
+    pub filter_language_deny: Vec<String>,
+
+    /// Allow list for paths (repeatable)
+    #[arg(long = "filter-path", value_name = "PATH")]
+    pub filter_path: Vec<PathBuf>,
+
+    /// Deny list for paths (repeatable)
+    #[arg(long = "filter-path-deny", value_name = "PATH")]
+    pub filter_path_deny: Vec<PathBuf>,
+
+    /// Allow list for folders (repeatable)
+    #[arg(long = "filter-folder", value_name = "PATH")]
+    pub filter_folder: Vec<PathBuf>,
+
+    /// Deny list for folders (repeatable)
+    #[arg(long = "filter-folder-deny", value_name = "PATH")]
+    pub filter_folder_deny: Vec<PathBuf>,
+
     /// Disable file headers in output
     #[arg(long)]
     pub no_file_header: bool,

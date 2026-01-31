@@ -6,8 +6,9 @@ use config::{Config as ConfigSource, ConfigError, Environment, File};
 use serde::Deserialize;
 
 use doto_core::{
-    DimensionStage, FolderSortConfig, LanguageOrder, LanguageSortConfig, MarkPriorityOverride,
-    MarkSortConfig, Order, PathSortConfig, SortConfig,
+    DimensionStage, DimensionValue, FilterConfig, FilterRule, FolderSortConfig, LanguageOrder,
+    LanguageSortConfig, MarkPriorityOverride, MarkSortConfig, Order, PathSortConfig, SortConfig,
+    ValuePredicate,
 };
 
 use crate::cli::{Cli, ConfigFormat, SortLangOrderArg, SortOrderArg};
@@ -25,6 +26,7 @@ pub struct Config {
     pub threads: Option<usize>,
     pub read_buffer_size: Option<usize>,
     pub sort: Option<SortConfig>,
+    pub filter: Option<FilterConfig>,
     pub file_header: bool,
 }
 
@@ -156,6 +158,123 @@ pub fn resolve_sort_config(
     }
 
     Ok((Some(config), warnings))
+}
+
+pub fn resolve_filter_config(
+    base: Option<FilterConfig>,
+    args: &Cli,
+) -> Result<Option<FilterConfig>, Box<dyn Error>> {
+    let mut config = base.unwrap_or_default();
+
+    if !args.filter_mark.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Mark(MarkSortConfig::default()),
+            predicate: ValuePredicate::Allow {
+                values: args
+                    .filter_mark
+                    .iter()
+                    .map(|value| DimensionValue::Mark(value.clone().into()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_mark_deny.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Mark(MarkSortConfig::default()),
+            predicate: ValuePredicate::Deny {
+                values: args
+                    .filter_mark_deny
+                    .iter()
+                    .map(|value| DimensionValue::Mark(value.clone().into()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_language.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Language(LanguageSortConfig::default()),
+            predicate: ValuePredicate::Allow {
+                values: args
+                    .filter_language
+                    .iter()
+                    .map(|value| DimensionValue::Language(value.clone().into()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_language_deny.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Language(LanguageSortConfig::default()),
+            predicate: ValuePredicate::Deny {
+                values: args
+                    .filter_language_deny
+                    .iter()
+                    .map(|value| DimensionValue::Language(value.clone().into()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_path.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Path(PathSortConfig::default()),
+            predicate: ValuePredicate::Allow {
+                values: args
+                    .filter_path
+                    .iter()
+                    .map(|value| DimensionValue::Path(value.clone()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_path_deny.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Path(PathSortConfig::default()),
+            predicate: ValuePredicate::Deny {
+                values: args
+                    .filter_path_deny
+                    .iter()
+                    .map(|value| DimensionValue::Path(value.clone()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_folder.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Folder(FolderSortConfig::default()),
+            predicate: ValuePredicate::Allow {
+                values: args
+                    .filter_folder
+                    .iter()
+                    .map(|value| DimensionValue::Folder(value.clone()))
+                    .collect(),
+            },
+        });
+    }
+
+    if !args.filter_folder_deny.is_empty() {
+        config.rules.push(FilterRule {
+            stage: DimensionStage::Folder(FolderSortConfig::default()),
+            predicate: ValuePredicate::Deny {
+                values: args
+                    .filter_folder_deny
+                    .iter()
+                    .map(|value| DimensionValue::Folder(value.clone()))
+                    .collect(),
+            },
+        });
+    }
+
+    if config.rules.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(config))
+    }
 }
 
 fn load_dotenv(no_dotenv: bool, dotenv: Option<&PathBuf>) -> Result<(), Box<dyn Error>> {
