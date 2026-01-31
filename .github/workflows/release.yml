@@ -31,8 +31,6 @@ jobs:
                       os: macos-15
                     - target: x86_64-apple-darwin
                       os: macos-14
-                    - target: aarch64-unknown-linux-gnu
-                      os: ubuntu-24.04-arm64
                     - target: x86_64-unknown-linux-gnu
                       os: ubuntu-24.04
         steps:
@@ -94,3 +92,93 @@ jobs:
               env:
                   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
               run: cargo publish -p doto --locked
+
+    update-homebrew-tap:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        needs: build-artifacts
+        steps:
+            - name: Checkout Homebrew tap
+              uses: actions/checkout@v4
+              with:
+                  repository: utakotoba/homebrew-tap
+                  token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+                  path: homebrew-tap
+
+            - name: Compute SHAs
+              env:
+                  VERSION: ${{ github.ref_name }}
+                  REPO: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+                  BASE_URL="https://github.com/${REPO}/releases/download/${VERSION}"
+
+                  curl -L -o doto-${VERSION}-aarch64-apple-darwin.tar.gz \
+                    "${BASE_URL}/doto-${VERSION}-aarch64-apple-darwin.tar.gz"
+                  curl -L -o doto-${VERSION}-x86_64-apple-darwin.tar.gz \
+                    "${BASE_URL}/doto-${VERSION}-x86_64-apple-darwin.tar.gz"
+                  curl -L -o doto-${VERSION}-x86_64-unknown-linux-gnu.tar.gz \
+                    "${BASE_URL}/doto-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+
+                  echo "ARM64_DARWIN_SHA256=$(shasum -a 256 doto-${VERSION}-aarch64-apple-darwin.tar.gz | awk '{print $1}')" >> "$GITHUB_ENV"
+                  echo "X86_64_DARWIN_SHA256=$(shasum -a 256 doto-${VERSION}-x86_64-apple-darwin.tar.gz | awk '{print $1}')" >> "$GITHUB_ENV"
+                  echo "X86_64_LINUX_SHA256=$(shasum -a 256 doto-${VERSION}-x86_64-unknown-linux-gnu.tar.gz | awk '{print $1}')" >> "$GITHUB_ENV"
+
+                  echo "VERSION_NO_V=${VERSION#v}" >> "$GITHUB_ENV"
+
+            - name: Update formula
+              env:
+                  VERSION_NO_V: ${{ env.VERSION_NO_V }}
+              run: |
+                  set -euo pipefail
+                  FORMULA_PATH="homebrew-tap/Formula/doto.rb"
+
+                  cat > "$FORMULA_PATH" << EOF
+                  # typed: false
+                  # frozen_string_literal: true
+
+                  class Doto < Formula
+                    desc "The comment mark searching engine used under doto cli tool"
+                    homepage "https://github.com/utakotoba/doto"
+                    version "${VERSION_NO_V}"
+                    license "MIT"
+
+                    on_macos do
+                      on_arm do
+                        url "https://github.com/utakotoba/doto/releases/download/v#{version}/doto-v#{version}-aarch64-apple-darwin.tar.gz"
+                        sha256 "${ARM64_DARWIN_SHA256}"
+                      end
+
+                      on_intel do
+                        url "https://github.com/utakotoba/doto/releases/download/v#{version}/doto-v#{version}-x86_64-apple-darwin.tar.gz"
+                        sha256 "${X86_64_DARWIN_SHA256}"
+                      end
+                    end
+
+                    on_linux do
+                      on_intel do
+                        url "https://github.com/utakotoba/doto/releases/download/v#{version}/doto-v#{version}-x86_64-unknown-linux-gnu.tar.gz"
+                        sha256 "${X86_64_LINUX_SHA256}"
+                      end
+                    end
+
+                    def install
+                      bin.install "doto"
+                    end
+
+                    test do
+                      system "#{bin}/doto", "--version"
+                    end
+                  end
+                  EOF
+
+            - name: Commit and push
+              run: |
+                  set -euo pipefail
+                  cd homebrew-tap
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add Formula/doto.rb
+                  git commit -m "chore: update doto formula to ${VERSION_NO_V}"
+                  git push
