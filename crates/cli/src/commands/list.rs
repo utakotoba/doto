@@ -1,11 +1,11 @@
 use std::error::Error;
-use std::io::{self, Write};
+use std::sync::{Arc, Mutex};
 
-use colored::Colorize;
 use doto_core::{ScanConfig, scan};
 
 use crate::commands::renderer::render_list;
 use crate::config::Config;
+use crate::messages::{MessageLevel, MessageSink, render_messages};
 use crate::progress::DeferredProgress;
 
 pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -16,6 +16,7 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     };
 
     let mut builder = ScanConfig::builder().roots(roots.clone());
+    let messages = Arc::new(Mutex::new(MessageSink::default()));
     let progress = DeferredProgress::new();
     let reporter = progress.clone();
     builder = builder.progress_reporter_arc(reporter);
@@ -54,52 +55,46 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
     let result = scan(builder.build())?;
     progress.finish();
     if result.marks.len() > 76 {
-        let mut stderr = io::BufWriter::new(io::stderr());
-        writeln!(
-            stderr,
-            "{}",
-            format!(
-                "too many results ({}) to display well in the terminal; please narrow the scan directory or filters",
-                result.marks.len()
-            )
-            .red()
-        )?;
-        stderr.flush()?;
+        if let Ok(mut sink) = messages.lock() {
+            sink.push(
+                MessageLevel::Warning,
+                format!(
+                    "too many results ({}) to display well in the terminal; please narrow the scan directory or filters",
+                    result.marks.len()
+                ),
+            );
+        }
+        render_messages(&messages.lock().unwrap().drain())?;
         return Ok(());
     }
 
     render_list(&result, &roots, config.sort.as_ref(), config.file_header)?;
 
     if result.marks.is_empty() {
-        let mut stdout = io::BufWriter::new(io::stdout());
-        writeln!(stdout, "{}", "no marks found".green())?;
-        stdout.flush()?;
+        if let Ok(mut sink) = messages.lock() {
+            sink.push(MessageLevel::Success, "no marks found");
+        }
     }
 
     if !warnings.is_empty() || !result.warnings.is_empty() {
-        let mut stderr = io::BufWriter::new(io::stderr());
-        writeln!(stderr)?;
-        for warning in warnings {
-            writeln!(stderr, "{}", format!("warning: {warning}").yellow())?;
-        }
-        for warning in result.warnings {
-            if let Some(path) = warning.path {
-                let path_display = path.display();
-                writeln!(
-                    stderr,
-                    "{}",
-                    format!("warning: {}: {}", path_display, warning.message).yellow()
-                )?;
-            } else {
-                writeln!(
-                    stderr,
-                    "{}",
-                    format!("warning: {}", warning.message).yellow()
-                )?;
+        if let Ok(mut sink) = messages.lock() {
+            for warning in warnings {
+                sink.push(MessageLevel::Warning, warning);
+            }
+            for warning in result.warnings {
+                if let Some(path) = warning.path {
+                    let path_display = path.display();
+                    sink.push(
+                        MessageLevel::Warning,
+                        format!("{}: {}", path_display, warning.message),
+                    );
+                } else {
+                    sink.push(MessageLevel::Warning, warning.message);
+                }
             }
         }
-        stderr.flush()?;
     }
 
+    render_messages(&messages.lock().unwrap().drain())?;
     Ok(())
 }

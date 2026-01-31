@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod config;
+mod messages;
 mod progress;
 
 use std::error::Error;

@@ -4,7 +4,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use doto_core::{Mark, ProgressReporter, ScanWarning, SkipReason};
@@ -51,11 +50,6 @@ impl DeferredProgress {
         if self.active.swap(true, Ordering::Relaxed) {
             return;
         }
-        eprintln!(
-            "{}",
-            "scanning a large codebase, showing progress...".yellow()
-        );
-
         let bar = ProgressBar::new_spinner();
         let style = ProgressStyle::with_template("{msg}")
             .unwrap_or_else(|_| ProgressStyle::default_spinner());
