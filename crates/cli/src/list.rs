@@ -8,7 +8,7 @@ use crate::messages::{MessageLevel, MessageSink, render_messages};
 use crate::progress::DeferredProgress;
 use crate::renderer::render_list;
 
-pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub fn run_list(config: Config, warnings: Vec<String>, verbose: bool) -> Result<(), Box<dyn Error>> {
     let roots = if config.roots.is_empty() {
         vec![std::env::current_dir()?]
     } else {
@@ -70,23 +70,42 @@ pub fn run_list(config: Config, warnings: Vec<String>) -> Result<(), Box<dyn Err
         }
     }
 
-    if !warnings.is_empty()
-        || result.stats.issues.walk_errors > 0
-        || result.stats.issues.metadata_errors > 0
-        || result.stats.issues.io_errors > 0
-        || result.stats.files_skipped > 0
-    {
-        if let Ok(mut sink) = messages.lock() {
-            for warning in warnings {
-                sink.push(MessageLevel::Warning, warning);
-            }
+    if let Ok(mut sink) = messages.lock() {
+        for warning in warnings {
+            sink.push(MessageLevel::Warning, warning);
+        }
+        if has_issue_warnings(&result.stats) {
             push_issue_summary(&mut sink, &result.stats);
+        }
+        if verbose {
             push_skip_summary(&mut sink, &result.stats);
         }
+        push_scan_summary(&mut sink, &result.stats);
     }
 
     render_messages(&messages.lock().unwrap().drain())?;
     Ok(())
+}
+
+fn has_issue_warnings(stats: &doto_core::ScanStats) -> bool {
+    stats.issues.walk_errors > 0
+        || stats.issues.metadata_errors > 0
+        || stats.issues.io_errors > 0
+}
+
+fn push_scan_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {
+    let mut summary = format!(
+        "scanned {} files ({} skipped)",
+        stats.files_scanned, stats.files_skipped
+    );
+    if stats.skipped_issues > 0 {
+        summary.push_str(&format!(", {} issues", stats.skipped_issues));
+    }
+    summary.push_str(&format!(", found {} marks", stats.matches));
+    if stats.cancelled {
+        summary.push_str(", cancelled");
+    }
+    sink.push(MessageLevel::Info, summary);
 }
 
 fn push_issue_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {
@@ -114,24 +133,31 @@ fn push_skip_summary(sink: &mut MessageSink, stats: &doto_core::ScanStats) {
     }
     let mut parts = Vec::new();
     if stats.skips.max_file_size > 0 {
-        parts.push(format!("max size {}", stats.skips.max_file_size));
+        parts.push((stats.skips.max_file_size, "max size"));
     }
     if stats.skips.metadata > 0 {
-        parts.push(format!("metadata {}", stats.skips.metadata));
+        parts.push((stats.skips.metadata, "metadata"));
     }
     if stats.skips.io > 0 {
-        parts.push(format!("I/O {}", stats.skips.io));
+        parts.push((stats.skips.io, "I/O"));
     }
     if stats.skips.unsupported_syntax > 0 {
-        parts.push(format!("unsupported {}", stats.skips.unsupported_syntax));
+        parts.push((stats.skips.unsupported_syntax, "unsupported"));
     }
     if stats.skips.binary > 0 {
-        parts.push(format!("binary {}", stats.skips.binary));
+        parts.push((stats.skips.binary, "binary"));
     }
-    if !parts.is_empty() {
-        sink.push(
-            MessageLevel::Warning,
-            format!("skipped files by reason: {}", parts.join(", ")),
-        );
+    if parts.is_empty() {
+        return;
     }
+    parts.sort_by(|a, b| b.0.cmp(&a.0));
+    let top = parts
+        .into_iter()
+        .take(3)
+        .map(|(count, label)| format!("{label} {count}"))
+        .collect::<Vec<_>>();
+    sink.push(
+        MessageLevel::Info,
+        format!("top skipped reasons: {}", top.join(", ")),
+    );
 }

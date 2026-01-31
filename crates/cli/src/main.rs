@@ -18,6 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let Cli {
         ref config,
         no_dotenv,
+        verbose,
         ..
     } = cli;
 
@@ -33,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(filter_config) = filter_config {
         config.filter = Some(filter_config);
     }
-    run_list(config, warnings)?;
+    run_list(config, warnings, verbose)?;
 
     Ok(())
 }

@@ -21,6 +21,10 @@ pub struct Cli {
     #[arg(value_name = "PATH")]
     pub roots: Vec<PathBuf>,
 
+    /// Show verbose scan summary
+    #[arg(long)]
+    pub verbose: bool,
+
 
     /// Include glob patterns (repeatable)
     #[arg(long = "include")]
