@@ -1,4 +1,4 @@
-mod comments;
+mod syntax;
 mod config;
 mod constants;
 mod control;

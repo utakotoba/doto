@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use regex::bytes::Regex;
 
-use crate::comments::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path};
+use crate::syntax::{BlockState, SyntaxSpec, find_comment_ranges, syntax_for_path};
 use crate::config::ScanConfig;
 use crate::constants::{DEFAULT_MARK_REGEX, normalize_mark_bytes};
 use crate::control::{CancellationToken, ProgressReporter, SkipReason};
