@@ -5,9 +5,6 @@ on:
         tags:
             - "v*.*.*"
 
-permissions:
-    contents: write
-
 env:
     MSRV: "1.87"
 
@@ -15,7 +12,7 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
         steps:
             - name: Checkout Sources
               uses: actions/checkout@v6
