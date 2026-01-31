@@ -1,0 +1,41 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+env:
+    MSRV: "1.87"
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout Sources
+              uses: actions/checkout@v6
+
+            - name: Install MSRV Toolchain
+              uses: dtolnay/rust-toolchain@master
+              with:
+                  toolchain: ${{ env.MSRV }}
+
+            - name: Setup Cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                  shared-key: "build"
+
+            - name: Publish doto-core
+              env:
+                  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+              run: cargo publish -p doto-core --locked
+
+            - name: Publish doto
+              env:
+                  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+              run: cargo publish -p doto --locked
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
